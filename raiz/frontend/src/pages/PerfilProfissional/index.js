@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import InputComponent from '../../components/Input';
 import { toast } from 'react-toastify';
 import { 
   Container, 
@@ -65,6 +66,17 @@ const ProfessionalProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [validations, setValidations] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false,
+    isNew: true
+  });
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -124,6 +136,39 @@ const ProfessionalProfile = () => {
     setFormData(prev => ({ ...prev, foto_perfil: croppedImage }));
     setShowCropper(false);
   };
+
+  const handleReset = () => {
+  if (newPassword !== confirmPassword) {
+    toast.error('As senhas não coincidem');
+    return;
+  }
+
+  toast.success('Senha redefinida com sucesso!');
+  setShowPopup(false);
+  setNewPassword('');
+  setConfirmPassword('');
+};
+
+const validatePassword = (password) => {
+  setValidations({
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    isNew: password !== newPassword
+  });
+};
+
+const firstMissing = () => {
+  if (!validations.length) return 'Mínimo 8 caracteres';
+  if (!validations.uppercase) return 'Pelo menos 1 letra maiúscula';
+  if (!validations.lowercase) return 'Pelo menos 1 letra minúscula';
+  if (!validations.number) return 'Pelo menos 1 número';
+  if (!validations.specialChar) return 'Pelo menos 1 caractere especial';
+  return null;
+};
+
 
   const formatDateToDisplay = (dateString) => {
     if (!dateString) return '';
@@ -384,12 +429,114 @@ const ProfessionalProfile = () => {
               </Button>
             </>
           ) : (
-            <PasswordButton to="/forgot-password">
+            <PasswordButton type="button" onClick={() => setShowPopup(true)}>
               🔐 Alterar Senha
             </PasswordButton>
           )}
         </div>
       </form>
+
+      {showPopup && (
+              <ModalBackdrop>
+                <ModalContent>
+      
+                  {/* Botão Fechar */}
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    style={{
+                      position: 'absolute',
+                      top: '15px',
+                      right: '15px',
+                      background: 'transparent',
+                      border: 'none',
+                      fontSize: '1.5rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      color: '#000',
+                      padding: '5px',
+                      lineHeight: '1',
+                      ':hover': {
+                        opacity: '0.8'
+                      }
+                    }}
+                  >
+                    ❌
+                  </button>
+      
+                  <div style={{ textAlign: 'center', marginBottom: '20px', fontFamily: 'Golos Text' }}>
+                    <img
+                      src="/assets/images/LogoForte.png"
+                      alt="Logo"
+                      style={{ width: '120px', height: '120px' }}
+                    />
+                    <h2 style={{ color: AZUL, margin: '10px 0' }}>
+                      Redefinir <span style={{ color: LARANJA }}>Senha</span>
+                    </h2>
+                  </div>
+      
+                  {/* Campo Nova Senha */}
+                  <InputComponent
+                    type="password"
+                    placeholder="Nova senha"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      validatePassword(e.target.value);
+                      setValidations(prev => ({ ...prev, isNew: true }));
+                    }}
+                  />
+      
+                  {/* Validações */}
+                  <div style={{ marginTop: '5px', fontSize: '0.9rem' }}>
+                    {firstMissing() ? (
+                      <span style={{ color: LARANJA }}>✗ {firstMissing()}</span>
+                    ) : (
+                      <span style={{ color: VERDE }}>✓ Senha Forte e Válida</span>
+                    )}
+                    {!validations.isNew && (
+                      <div style={{ color: '#ff4444', marginTop: '5px' }}>
+                        ✗ Não pode ser a senha anterior
+                      </div>
+                    )}
+                  </div>
+      
+                  {/* Campo Confirmar Senha */}
+                  <InputComponent
+                    type="password"
+                    placeholder="Confirme a senha"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setValidations(prev => ({ ...prev, isNew: true }));
+                    }}
+                    style={{ marginTop: '15px' }}
+                  />
+      
+                  {confirmPassword && confirmPassword !== newPassword && (
+                    <div style={{ color: LARANJA, fontSize: '0.8rem', marginTop: '5px' }}>
+                      ❌ Senhas não conferem
+                    </div>
+                  )}
+      
+                  {/* Botão Redefinir */}
+                  <Button
+                    onClick={handleReset}
+                    disabled={
+                      !validations.length ||
+                      !validations.uppercase ||
+                      !validations.lowercase ||
+                      !validations.number ||
+                      !validations.specialChar ||
+                      newPassword !== confirmPassword
+                    }
+                    style={{ marginTop: '20px' }}
+                  >
+                    ✅ Redefinir Senha
+                  </Button>
+      
+                </ModalContent>
+              </ModalBackdrop>
+            )}
     </Container>
   );
 };

@@ -10,9 +10,17 @@ export default function MeusTreinosButton({ onClick, active }) {
       whileTap={{ scale: 0.9 }}
       style={{ top: '90px' }}
     >
-      <span style={{ 
-        fontSize: '22px',
-        filter: active ? 'none' : 'grayscale(50%) opacity(0.8)' }}>👤</span>
+      {active ? (
+        <>
+          <span style={{ fontSize: '22px' }}>✏️</span>
+          <S.Tooltip>Criar Treino</S.Tooltip>
+        </>
+      ) : (
+        <span style={{ 
+          fontSize: '22px',
+          filter: 'grayscale(50%) opacity(0.8)' 
+        }}>👤</span>
+      )}
     </S.FloatingButton>
   );
 }

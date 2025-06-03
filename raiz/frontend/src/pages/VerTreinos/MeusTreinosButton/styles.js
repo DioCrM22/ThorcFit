@@ -17,6 +17,7 @@ export const FloatingButton = styled(motion.button)`
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   z-index: 100;
   transition: all 0.2s ease;
+  flex-direction: column;
 
   &:hover {
     transform: scale(1.05);
@@ -28,4 +29,18 @@ export const FloatingButton = styled(motion.button)`
     height: 45px;
     right: 15px;
   }
+`;
+
+export const Tooltip = styled.span`
+  position: absolute;
+  top: 60px;
+  background: #0066cc;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: ${props => props.active ? 1 : 0};
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 `;

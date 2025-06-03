@@ -7,6 +7,7 @@ import InputWithOptions from '../../components/InputWithOptions';
 import { useAuth } from '../../hooks/useAuth';
 import { Container, ProfilePicture, EditButton } from './styles';
 import NavBar from '../../components/NavBar';
+import InputComponent from '../../components/Input';
 import ImageCropper from './ImageCropper';
 import {
   Header,
@@ -34,7 +35,6 @@ const AZUL = '#3a86ff';
 const LARANJA = '#FF6B35';
 const VERDE = '#229a00';
 
-
 const ProfilePage = () => {
   const [userData, setUserData] = useState({
     nome: 'Carregando...',
@@ -52,6 +52,18 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [validations, setValidations] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false,
+    isNew: true
+  });
+
   const { updateProfile } = useAuth();
   const { checkSession } = useAuth();
   const navigate = useNavigate();
@@ -133,6 +145,51 @@ const ProfilePage = () => {
     return !error;
   };
 
+  const validatePassword = (password) => {
+    setValidations({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      isNew: password !== userData.senha_anterior
+    });
+  };
+
+  const firstMissing = () => {
+    if (!validations.length) return 'Mínimo 8 caracteres';
+    if (!validations.uppercase) return 'Pelo menos 1 letra maiúscula';
+    if (!validations.lowercase) return 'Pelo menos 1 letra minúscula';
+    if (!validations.number) return 'Pelo menos 1 número';
+    if (!validations.specialChar) return 'Pelo menos 1 caractere especial';
+    return null;
+  };
+
+  const handleReset = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('http://localhost:5000/reset-password', {
+        newPassword
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      toast.success('Senha redefinida com sucesso!');
+      setShowPopup(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Erro ao redefinir senha');
+    }
+  };
+
   const handleSave = async () => {
     const hasErrors = Object.keys(errors).some(key => errors[key]);
     if (hasErrors) return toast.error('Corrija os campos inválidos');
@@ -140,7 +197,6 @@ const ProfilePage = () => {
     try {
       const formDataToSend = new FormData();
       
-      // Mapear campos do frontend para o backend
       const changes = {
         nome_completo: formData.nome,
         telefone: formData.telefone,
@@ -151,17 +207,14 @@ const ProfilePage = () => {
         objetivo: formData.objetivo
       };
   
-      // Adicionar apenas campos alterados
       Object.keys(changes).forEach(key => {
         if (changes[key] !== userData[key] && changes[key] !== undefined) {
           formDataToSend.append(key, changes[key]);
         }
       });
   
-      // Tratar a imagem separadamente
       if (formData.foto_perfil && formData.foto_perfil !== userData.foto_perfil) {
         if (formData.foto_perfil.startsWith('data:image')) {
-          // Converter base64 para blob
           const blob = await fetch(formData.foto_perfil).then(r => r.blob());
           formDataToSend.append('foto_perfil', blob);
         }
@@ -180,7 +233,6 @@ const ProfilePage = () => {
         }
       });
   
-      // Atualizar estado com os novos dados
       const updatedUser = {
         ...userData,
         ...response.data.usuarioAtualizado,
@@ -269,7 +321,7 @@ const ProfilePage = () => {
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-      <InputGroup>
+        <InputGroup>
           <Label>👤 Nome Completo</Label>
           {isEditing ? (
             <>
@@ -286,6 +338,7 @@ const ProfilePage = () => {
             <ViewModeField>{userData.nome || 'Não informado'}</ViewModeField>
           )}
         </InputGroup>
+
         <InputGroup>
           <Label>📱 Telefone</Label>
           {isEditing ? (
@@ -303,7 +356,7 @@ const ProfilePage = () => {
               )}
             </InputMask>
           ) : (
-            <ViewModeField>{userData.nome || 'Não informado'}</ViewModeField>
+            <ViewModeField>{userData.telefone || 'Não informado'}</ViewModeField>
           )}
         </InputGroup>
 
@@ -328,23 +381,22 @@ const ProfilePage = () => {
           )}
         </InputGroup>
 
-
         <SpacingLine />
   
         <InputGroup>
-            <Label>📆 Data Nascimento</Label>
-            {isEditing ? (
-              <Input
-                type="date"
-                name="dataNascimento"
-                value={formData.dataNascimento}
-                onChange={handleInputChange}
-                bordercolor={AZUL}
-              />
-            ) : (
-              <ViewModeField>{userData.dataNascimento || 'Não informado'}</ViewModeField>
-            )}
-          </InputGroup>
+          <Label>📆 Data Nascimento</Label>
+          {isEditing ? (
+            <Input
+              type="date"
+              name="dataNascimento"
+              value={formData.dataNascimento}
+              onChange={handleInputChange}
+              bordercolor={AZUL}
+            />
+          ) : (
+            <ViewModeField>{userData.dataNascimento || 'Não informado'}</ViewModeField>
+          )}
+        </InputGroup>
 
         <DoubleInputContainer>
           <CompactInputGroup>
@@ -378,7 +430,7 @@ const ProfilePage = () => {
                 />
               </UnitWrapper>
             ) : (
-              <ViewModeField>{userData.telefone || 'Não informado'}</ViewModeField>
+              <ViewModeField>{userData.peso || 'Não informado'}</ViewModeField>
             )}
             {errors.peso && <ErrorMessage>{errors.peso}</ErrorMessage>}
           </CompactInputGroup>
@@ -402,31 +454,127 @@ const ProfilePage = () => {
         </InputRow>
 
         <Separator>
-            <span><img src="/assets/images/iconlogo.png" alt="iconLogo" /></span>
+          <span><img src="/assets/images/iconlogo.png" alt="iconLogo" /></span>
         </Separator>
 
         {isEditing && (
-            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', }}>
-              <PasswordButton to="/forgot-password">
-                🔐 Alterar Senha
-              </PasswordButton>
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <PasswordButton onClick={() => setShowPopup(true)}>
+              🔐 Alterar Senha
+            </PasswordButton>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <Button type="submit" cor={VERDE}>
-                  💾 Salvar Alterações
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  cor={LARANJA}
-                  onClick={() => setIsEditing(false)}
-                >
-                  ❌ Cancelar
-                </Button>
-              </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button type="submit" cor={VERDE}>
+                💾 Salvar Alterações
+              </Button>
+              
+              <Button 
+                type="button" 
+                cor={LARANJA}
+                onClick={() => setIsEditing(false)}
+              >
+                ❌ Cancelar
+              </Button>
             </div>
-          )}
+          </div>
+        )}
       </form>
+
+      {showPopup && (
+        <ModalBackdrop>
+          <ModalContent>
+
+            {/* Botão Fechar */}
+            <button
+              onClick={() => setShowPopup(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#000'
+              }}
+            >
+              ✖
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: '20px', fontFamily: 'Golos Text' }}>
+                    <img
+                      src="/assets/images/LogoForte.png"
+                      alt="Logo"
+                      style={{ width: '120px', height: '120px' }}
+                    />
+                    <h2 style={{ color: AZUL, margin: '10px 0' }}>
+                      Redefinir <span style={{ color: LARANJA }}>Senha</span>
+                    </h2>
+                  </div>
+
+            {/* Campo Nova Senha */}
+            <InputComponent
+              type="password"
+              placeholder="Nova senha"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                validatePassword(e.target.value);
+                setValidations(prev => ({ ...prev, isNew: true }));
+              }}
+            />
+
+            {/* Validações */}
+            <div style={{ marginTop: '5px', fontSize: '0.9rem' }}>
+              {firstMissing() ? (
+                <span style={{ color: LARANJA }}>✗ {firstMissing()}</span>
+              ) : (
+                <span style={{ color: VERDE }}>✓ Senha Forte e Válida</span>
+              )}
+              {!validations.isNew && (
+                <div style={{ color: '#ff4444', marginTop: '5px' }}>
+                  ✗ Não pode ser a senha anterior
+                </div>
+              )}
+            </div>
+
+            {/* Campo Confirmar Senha */}
+            <InputComponent
+              type="password"
+              placeholder="Confirme a senha"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setValidations(prev => ({ ...prev, isNew: true }));
+              }}
+              style={{ marginTop: '15px' }}
+            />
+
+            {confirmPassword && confirmPassword !== newPassword && (
+              <div style={{ color: LARANJA, fontSize: '0.8rem', marginTop: '5px' }}>
+                ❌ Senhas não conferem
+              </div>
+            )}
+
+            {/* Botão Redefinir */}
+            <Button
+              onClick={handleReset}
+              disabled={
+                !validations.length ||
+                !validations.uppercase ||
+                !validations.lowercase ||
+                !validations.number ||
+                !validations.specialChar ||
+                newPassword !== confirmPassword
+              }
+              style={{ marginTop: '20px' }}
+            >
+              ✅ Redefinir Senha
+            </Button>
+
+          </ModalContent>
+        </ModalBackdrop>
+      )}
     </Container>
   );
 };

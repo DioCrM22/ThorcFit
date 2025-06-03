@@ -543,3 +543,20 @@ export const ReviewItem = styled.div`
   }
 `;
 
+export const ErrorMessage = styled.div`
+  color: red;
+  background: #ffe5e5;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+`;
+
+export const Select = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  font-size: 1rem;
+`;

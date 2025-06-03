@@ -16,6 +16,12 @@ const glow = keyframes`
   100% { box-shadow: 0 0 10px ${AMARELO}; }
 `;
 
+//const pulse = keyframes`
+  //0% { transform: scale(1); }
+  //50% { transform: scale(1.05); }
+  //100% { transform: scale(1); }
+//`;
+
 // Estrutura principal
 export const Page = styled.div`
   padding-top: 60px;
@@ -186,13 +192,13 @@ export const DetailsGrid = styled.div`
   }
 `;
 
+// Botões
 export const ButtonGroup = styled.div`
   margin-top: auto;
   display: flex;
   gap: 10px;
 `;
 
-// Botões
 const BaseButton = styled.button`
   padding: 12px 18px;
   border: none;
@@ -271,6 +277,63 @@ export const StopButton = styled(BaseButton)`
   &:hover {
     background: #e05a28;
   }
+`;
+
+export const FloatingActionButton = styled(BaseButton)`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 100;
+  animation: ${props => props.pulse ? 'pulse 2s infinite' : 'none'};
+
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+export const SelectionCheckbox = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: ${props => props.selected ? AZUL : 'rgba(255,255,255,0.7)'};
+  border: 2px solid ${props => props.selected ? 'white' : AZUL};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+export const BulkActionsContainer = styled(motion.div)`
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 15px 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  z-index: 99;
 `;
 
 // Tela de exercício em tela cheia

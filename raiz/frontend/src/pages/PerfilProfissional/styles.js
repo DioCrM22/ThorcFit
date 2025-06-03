@@ -32,6 +32,17 @@ const imageEntrance = keyframes`
   }
 `;
 
+const popupEntrance = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -272,7 +283,7 @@ export const Select = styled.select`
 
 export const Button = styled.button`
   font-family: "Golos Text", sans-serif;
-  width: ${props => props.fullWidth ? '100%' : 'auto'};
+  width: 100%;
   padding: 15px;
   background: ${props => props.cor || AZUL};
   color: white;
@@ -281,7 +292,7 @@ export const Button = styled.button`
   font-size: 20px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: filter 0.2s ease;
   margin-top: ${props => props.mt ? `${props.mt}rem` : '0'};
   display: flex;
   align-items: center;
@@ -290,22 +301,15 @@ export const Button = styled.button`
 
   &:hover {
     filter: brightness(1.1);
-    transform: translateY(-1px);
   }
 
   &:active {
     filter: brightness(0.9);
-    transform: translateY(0);
   }
 
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
-  }
-
-  @media (max-width: 480px) {
-    padding: 12px;
-    font-size: 18px;
   }
 `;
 
@@ -357,7 +361,6 @@ export const ModalBackdrop = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  animation: ${fadeIn} 0.3s ease;
 `;
 
 export const ModalContent = styled.div`
@@ -366,8 +369,8 @@ export const ModalContent = styled.div`
   border-radius: 12px;
   width: 90%;
   max-width: 400px;
-  animation: ${fadeIn} 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+  animation: ${popupEntrance} 0.3s ease;
 
   @media (max-width: 480px) {
     padding: 1.5rem;

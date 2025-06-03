@@ -31,44 +31,45 @@ import {
   Separator,
 } from './styles';
 
-const EditarTreino = ({ userId, workoutId, onClose }) => {
+const EditarTreino = ({ userId, workoutId, tipoUsuario, alunosDisponiveis = [], onClose, onSave }) => {
   const [step, setStep] = useState(1);
+  const [alunosSelecionados, setAlunosSelecionados] = useState([]);
   const [workout, setWorkout] = useState({
-  nome: 'Treino de Hipertrofia',
-  objetivo: 'Ganho de massa muscular',
-  observacoes: 'Focar na execução correta movimentos',
-  data_criacao: new Date().toISOString().split('T')[0],
-  exercicios: [
-    {
-      nome: 'Supino Reto',
-      grupo_muscular: 'Peito',
-      series: 4,
-      repeticoes: 10,
-      carga_kg: 30,
-      equipamento: 'Barra olímpica',
-      descanso_segundos: 60
-    },
-    {
-      nome: 'Agachamento Livre',
-      grupo_muscular: 'Pernas',
-      series: 4,
-      repeticoes: 12,
-      carga_kg: 40,
-      equipamento: 'Barra',
-      descanso_segundos: 90
-    }
-  ]
-});
+    nome: 'Treino de Hipertrofia',
+    objetivo: 'Ganho de massa muscular',
+    observacoes: 'Focar na execução correta movimentos',
+    data_criacao: new Date().toISOString().split('T')[0],
+    exercicios: [
+      {
+        nome: 'Supino Reto',
+        grupo_muscular: 'Peito',
+        series: 4,
+        repeticoes: 10,
+        carga_kg: 30,
+        equipamento: 'Barra olímpica',
+        descanso_segundos: 60
+      },
+      {
+        nome: 'Agachamento Livre',
+        grupo_muscular: 'Pernas',
+        series: 4,
+        repeticoes: 12,
+        carga_kg: 40,
+        equipamento: 'Barra',
+        descanso_segundos: 90
+      }
+    ]
+  });
 
   const [newExercise, setNewExercise] = useState({
-  nome: '',
-  grupo_muscular: '',
-  series: 3,
-  repeticoes: 12,
-  carga_kg: '',
-  equipamento: '',
-  descanso_segundos: 60
-});
+    nome: '',
+    grupo_muscular: '',
+    series: 3,
+    repeticoes: 12,
+    carga_kg: '',
+    equipamento: '',
+    descanso_segundos: 60
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -89,23 +90,55 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
     }));
 
     setNewExercise({
-    nome: '',
-    grupo_muscular: '',
-    series: 3,
-    repeticoes: 12,
-    carga_kg: '',
-    equipamento: '',
-    descanso_segundos: 60
+      nome: '',
+      grupo_muscular: '',
+      series: 3,
+      repeticoes: 12,
+      carga_kg: '',
+      equipamento: '',
+      descanso_segundos: 60
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Treino enviado:', workout);
-    // Simulação de envio para o aluno
-    alert(`Treino enviado com sucesso para o aluno!`);
-    onClose();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const treinoPayload = {
+    ...workout,
+    criado_por: userId,
+    data_criacao: workout.data_criacao,
   };
+
+  try {
+    if (tipoUsuario === 'treinador') {
+      if (!alunosSelecionados || alunosSelecionados.length === 0) {
+        alert('Selecione pelo menos um aluno para enviar o treino.');
+        return;
+      }
+
+      for (const alunoId of alunosSelecionados) {
+        await fetch('/api/treinos/para-aluno', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alunoId, treino: treinoPayload }),
+        });
+      }
+    } else {
+      await fetch('/api/treinos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, treino: treinoPayload }),
+      });
+    }
+
+    onSave(workout);
+    onClose();
+  } catch (error) {
+    console.error('Erro ao salvar o treino:', error);
+    alert('Erro ao salvar o treino. Tente novamente.');
+  }
+};
+
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
@@ -157,6 +190,26 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
                 rows="3" 
               />
             </FormGroup>
+
+          {tipoUsuario === 'treinador' && (
+            <FormGroup>
+              <Label>Selecionar Alunos</Label>
+              <select
+                multiple
+                value={alunosSelecionados}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+                  setAlunosSelecionados(selected);
+                }}
+              >
+                {alunosDisponiveis.map((aluno) => (
+                  <option key={aluno.id} value={aluno.id}>
+                    {aluno.nome}
+                  </option>
+                ))}
+              </select>
+            </FormGroup>
+          )}
           </>
         );
       case 2:
@@ -184,7 +237,6 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
                 />
               </FormGroup>
 
-              {/* Linha superior - Carga e Equipamento */}
               <ExerciseRow>
                 <FormGroup>
                   <Label>Carga (kg)</Label>
@@ -209,7 +261,6 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
                 </FormGroup>
               </ExerciseRow>
 
-              {/* Linha inferior - Séries, Repetições e Descanso */}
               <ExerciseRow>
                 <FormGroup>
                   <Label>Séries</Label>
@@ -277,7 +328,6 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
                           <small>{exercise.grupo_muscular}</small>
                         </div>
                       </ExerciseHeader>
-
 
                       <ExerciseContent>
                         <div>
@@ -382,7 +432,7 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
             )}
 
             <SubmitButton type="submit">
-              <FiSend /> Enviar Treino para o Aluno
+              <FiSend /> {tipoUsuario === 'treinador' ? 'Enviar Treino para Aluno(s)' : 'Salvar Treino'}
             </SubmitButton>
           </ReviewContainer>
         );
@@ -401,7 +451,6 @@ const EditarTreino = ({ userId, workoutId, onClose }) => {
         <SecondaryButton onClick={onClose} className="fechar-btn">
           <FiX />
         </SecondaryButton>
-
       </TitleBar>
 
       <LogoIcon>

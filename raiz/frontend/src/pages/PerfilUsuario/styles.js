@@ -28,6 +28,18 @@ const imageEntrance = keyframes`
   }
 `;
 
+const popupEntrance = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -323,7 +335,12 @@ export const ModalContent = styled.div`
   border-radius: 12px;
   width: 90%;
   max-width: 400px;
-  animation: ${fadeIn} 0.3s ease;
+  position: relative;
+  animation: ${popupEntrance} 0.3s ease;
+
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+  }
 `;
 
 export const ErrorMessage = styled.span`

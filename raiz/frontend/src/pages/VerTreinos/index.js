@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import * as S from './styles';
 import TreinadorSwitch from './TreinadorSwitch';
 import MeusTreinosButton from './MeusTreinosButton';
+import EditarTreino from '../../components/EditarTreino';
 
 const mockTreinosPessoais = [
   {
@@ -59,6 +60,7 @@ export default function VerTreino() {
   const [activeTab, setActiveTab] = useState('pendentes');
   const [viewMode, setViewMode] = useState('pessoal');
   const [treinadorAtual, setTreinadorAtual] = useState(null);
+  const [showEditPopup, setShowEditPopup] = useState(false);
 
   const formatarData = (dataString) => {
     const data = new Date(dataString);
@@ -101,8 +103,12 @@ export default function VerTreino() {
 
       <MeusTreinosButton
         onClick={() => {
-          setViewMode('pessoal');
-          setTreinadorAtual(null);
+          if (viewMode === 'pessoal') {
+            setShowEditPopup(true);
+          } else {
+            setViewMode('pessoal');
+            setTreinadorAtual(null);
+          }
         }}
         active={viewMode === 'pessoal'}
         whileHover={{ scale: 1.1 }}
@@ -204,6 +210,30 @@ export default function VerTreino() {
           </S.TreinosGrid>
         </AnimatePresence>
       </S.Content>
+      {showEditPopup && (
+        <S.EditPopupOverlay>
+          <S.EditPopupContent>
+            <EditarTreino 
+              userId="current-user-id" 
+              onClose={() => setShowEditPopup(false)} 
+              onSave={(newWorkout) => {
+                const newPersonalWorkout = {
+                  id: Date.now(),
+                  nome: newWorkout.nome,
+                  objetivo: newWorkout.objetivo,
+                  observacoes: newWorkout.observacoes,
+                  data: newWorkout.data_criacao,
+                  status: "pendente",
+                  tipo: "pessoal",
+                  exercicios: newWorkout.exercicios.map(ex => ex.nome)
+                };
+                mockTreinosPessoais.unshift(newPersonalWorkout);
+                setShowEditPopup(false);
+              }}
+            />
+          </S.EditPopupContent>
+        </S.EditPopupOverlay>
+      )}
     </S.Page>
   );
 }

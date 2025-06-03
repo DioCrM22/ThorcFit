@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiActivity, FiUser, FiClock, FiEdit, FiTrash2 } from 'react-icons/fi';
 import TrainerSidebar from './Sidebar';
-import EditarTreino from './EditarTreino';
+import EditarTreino from '../../components/EditarTreino';
 import NavBar from '../../components/NavBar';
 import {
   PageContainer,
