@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlay, FiPause, FiCheck, FiClock, FiInfo } from 'react-icons/fi';
+import { FiPlay, FiPause, FiClock, FiCheck, FiInfo } from 'react-icons/fi';
 import Confetti from 'react-confetti';
 import * as S from './styles';
 import NavBar from '../../components/NavBar';
@@ -156,6 +156,9 @@ export default function Treinos() {
   const [currentRep, setCurrentRep] = useState(1);
   const [currentSerie, setCurrentSerie] = useState(1);
   const [showDetails, setShowDetails] = useState({});
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const navigate = useNavigate();
 
   const toggleDetails = (id) => {
@@ -163,6 +166,40 @@ export default function Treinos() {
       ...prev,
       [id]: !prev[id]
     }));
+  };
+
+  const toggleItemSelection = (id) => {
+    const newSelectedItems = selectedItems.includes(id) 
+      ? selectedItems.filter(itemId => itemId !== id)
+      : [...selectedItems, id];
+    
+    setSelectedItems(newSelectedItems);
+    setSelectAll(newSelectedItems.length === treinos.length);
+  };
+
+  const handleBulkComplete = () => {
+    setTreinos(treinos.map(t => 
+      selectedItems.includes(t.id) ? {...t, realizado: true, paused: false} : t
+    ));
+    setSelectedItems([]);
+    setShowBulkActions(false);
+  };
+
+  const handleBulkReset = () => {
+    setTreinos(treinos.map(t => 
+      selectedItems.includes(t.id) ? {...t, realizado: false, paused: false} : t
+    ));
+    setSelectedItems([]);
+    setShowBulkActions(false);
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(treinos.map(treino => treino.id));
+    }
+    setSelectAll(!selectAll);
   };
 
   const handleFinishWorkout = useCallback(() => {
@@ -259,16 +296,61 @@ export default function Treinos() {
         onBack={() => navigate('/ver-treinos')}
       />
 
+      {showBulkActions && (
+        <S.BulkActionsContainer initial={{ y: -100 }} animate={{ y: 0 }} exit={{ y: -100 }}>
+          <S.ExecuteButton onClick={handleBulkComplete}>✅ Finalizar Selecionados</S.ExecuteButton>
+          <S.ContinueButton onClick={handleBulkReset}>🔄 Reiniciar Selecionados</S.ContinueButton>
+          <S.DeleteButton onClick={() => {
+            setSelectedItems([]);
+            setShowBulkActions(false);
+          }}>❌ Cancelar</S.DeleteButton>
+        </S.BulkActionsContainer>
+      )}
+
       {showConfetti && (
         <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={200} gravity={0.5} />
       )}
 
       <S.Content>
+        {(selectedItems.length > 0 || selectAll) && (
+          <S.SelectionBarTop>
+            <S.SelectAllCheckbox 
+              selected={selectAll} 
+              onClick={handleSelectAll}
+            >
+              <span>{selectAll && '✓'}</span>
+              Todos
+            </S.SelectAllCheckbox>
+            
+            <S.ManageSelectionButton 
+              onClick={() => setShowBulkActions(true)}
+              disabled={selectedItems.length === 0}
+            >
+              Gerenciar Selecionados
+            </S.ManageSelectionButton>
+          </S.SelectionBarTop>
+        )}
         <S.TreinosList>
           {treinos.map((item) => (
-            <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div 
+              key={item.id} 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                border: selectedItems.includes(item.id) ? `2px solid ${S.AZUL}` : 'none'
+              }} 
+              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+            >
               <S.TreinoCard>
                 <S.GifContainer>
+                  <S.SelectionCheckbox 
+                    selected={selectedItems.includes(item.id)}
+                    onClick={() => toggleItemSelection(item.id)}
+                  >
+                    {selectedItems.includes(item.id) && '✓'}
+                  </S.SelectionCheckbox>
                   <img src={item.gif} alt={item.nome} />
                   <S.TimeBadge><FiClock size={14} /> {item.tempo}s</S.TimeBadge>
                   <S.RepInfo>{item.repeticoes} rep x {item.series} séries</S.RepInfo>
@@ -294,6 +376,8 @@ export default function Treinos() {
                   <S.ButtonGroup>
                     {item.realizado ? (
                       <S.FinishedButton><FiCheck /> Finalizado</S.FinishedButton>
+                    ) : item.paused ? (
+                      <S.ContinueButton onClick={() => handleStartWorkout(item)}><FiPlay /> Continuar</S.ContinueButton>
                     ) : (
                       <S.ExecuteButton onClick={() => handleStartWorkout(item)}><FiPlay /> Iniciar</S.ExecuteButton>
                     )}

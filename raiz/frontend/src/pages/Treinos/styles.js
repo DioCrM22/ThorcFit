@@ -16,12 +16,6 @@ const glow = keyframes`
   100% { box-shadow: 0 0 10px ${AMARELO}; }
 `;
 
-//const pulse = keyframes`
-  //0% { transform: scale(1); }
-  //50% { transform: scale(1.05); }
-  //100% { transform: scale(1); }
-//`;
-
 // Estrutura principal
 export const Page = styled.div`
   padding-top: 60px;
@@ -279,26 +273,6 @@ export const StopButton = styled(BaseButton)`
   }
 `;
 
-export const FloatingActionButton = styled(BaseButton)`
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  z-index: 100;
-  animation: ${props => props.pulse ? 'pulse 2s infinite' : 'none'};
-
-  &:hover {
-    transform: scale(1.1);
-  }
-`;
-
 export const SelectionCheckbox = styled.div`
   position: absolute;
   top: 12px;
@@ -334,6 +308,25 @@ export const BulkActionsContainer = styled(motion.div)`
   justify-content: center;
   gap: 15px;
   z-index: 99;
+  
+  /* Layout para desktop */
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  /* Layout para mobile */
+  @media (max-width: 767px) {
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    
+    /* Ajusta os botões para ocupar toda a largura */
+    & > button {
+      width: 100%;
+      padding: 12px;
+    }
+  }
 `;
 
 // Tela de exercício em tela cheia
@@ -546,5 +539,59 @@ export const CompletionText = styled.h2`
 
   @media (max-width: 480px) {
     font-size: 1.5rem;
+  }
+`;
+
+// Adicione isso na seção de estilos
+export const SelectionBarTop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid ${CINZA_CLARO};
+`;
+
+export const SelectAllCheckbox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  
+  span {
+    width: 20px;
+    height: 20px;
+    border: 2px solid ${AZUL};
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: ${props => props.selected ? AZUL : 'white'};
+    color: white;
+    transition: all 0.2s;
+  }
+`;
+
+export const ManageSelectionButton = styled.button`
+  background: ${LARANJA};
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #0055aa;
+  }
+
+  &:disabled {
+    background: ${CINZA_CLARO};
+    color: ${CINZA_ESCURO};
+    cursor: not-allowed;
   }
 `;
