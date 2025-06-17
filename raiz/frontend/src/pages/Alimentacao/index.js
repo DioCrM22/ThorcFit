@@ -1,6 +1,8 @@
+// src/pages/Alimentacao/index.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiMinus, FiCalendar } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
 import NavBar from '../../components/NavBar';
 import NutritionBars from './NutritionBars';
 import FloatingNutriButton from './FloatingNutriButton';
@@ -9,7 +11,6 @@ import AddAlimentoPopup from './AddAlimentoPopup';
 import * as S from './styles';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useAuth } from '../../hooks/useAuth';
 
 const AlimentacaoPage = () => {
   const navigate = useNavigate();
@@ -23,10 +24,7 @@ const AlimentacaoPage = () => {
   const [showAddFood, setShowAddFood] = useState(false);
   const [currentMeal, setCurrentMeal] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [diarioAlimentar, setDiarioAlimentar] = useState(null);
-  const [vinculoNutricional, setVinculoNutricional] = useState(null);
-  const [planoNutricional, setPlanoNutricional] = useState(null);
   const [meals, setMeals] = useState([
     {
       id: 1,
@@ -62,119 +60,66 @@ const AlimentacaoPage = () => {
 
   // Carregar dados do diário alimentar
   useEffect(() => {
-    const loadDiarioAlimentar = async () => {
-      if (!user?.id_usuario) return;
+    if (user) {
+      loadDiarioAlimentar();
+    }
+  }, [user, currentDate]);
 
-      try {
-        setLoading(true);
-        const dateString = currentDate.toISOString().split('T')[0];
+  const loadDiarioAlimentar = async () => {
+    try {
+      setLoading(true);
+      const dateString = currentDate.toISOString().split('T')[0];
+      
+      const response = await fetch(`http://localhost:3001/api/alimentacao/diario/${dateString}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDiarioAlimentar(data);
+        setWaterIntake(data.agua_ml || 0);
         
-        // Buscar diário alimentar do dia
-        const diarioResponse = await fetch(`http://localhost:3001/api/alimentacao/diario/${user.id_usuario}?data=${dateString}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (diarioResponse.ok) {
-          const diarioData = await diarioResponse.json();
-          setDiarioAlimentar(diarioData);
-          setWaterIntake(diarioData.agua_ml || 0);
-          
-          // Carregar refeições do diário
-          if (diarioData.id_registro) {
-            const refeicoesResponse = await fetch(`http://localhost:3001/api/alimentacao/refeicoes/${diarioData.id_registro}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-
-            if (refeicoesResponse.ok) {
-              const refeicoesData = await refeicoesResponse.json();
-              
-              // Organizar refeições por tipo
-              const mealsWithItems = meals.map(meal => ({
-                ...meal,
-                items: refeicoesData
-                  .filter(refeicao => refeicao.tipo_refeicao === meal.tipo)
-                  .flatMap(refeicao => refeicao.alimentos || [])
-              }));
-              
-              setMeals(mealsWithItems);
+        // Organizar refeições por tipo
+        const mealsByType = {};
+        if (data.refeicoes) {
+          data.refeicoes.forEach(refeicao => {
+            if (!mealsByType[refeicao.tipo_refeicao]) {
+              mealsByType[refeicao.tipo_refeicao] = [];
             }
-          }
-        } else {
-          // Se não existe diário para o dia, criar um novo
-          const newDiarioResponse = await fetch(`http://localhost:3001/api/alimentacao/diario`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-              id_usuario: user.id_usuario,
-              data: dateString,
-              agua_ml: 0
-            })
+            mealsByType[refeicao.tipo_refeicao].push(...refeicao.alimentos);
           });
-
-          if (newDiarioResponse.ok) {
-            const newDiario = await newDiarioResponse.json();
-            setDiarioAlimentar(newDiario);
-            setWaterIntake(0);
-          }
         }
 
-        // Buscar vínculo nutricional ativo
-        const vinculoResponse = await fetch(`http://localhost:3001/api/vinculos/nutricionais?status=ativo&id_usuario=${user.id_usuario}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (vinculoResponse.ok) {
-          const vinculoData = await vinculoResponse.json();
-          if (vinculoData.length > 0) {
-            setVinculoNutricional(vinculoData[0]);
-            
-            // Buscar plano nutricional ativo
-            const planoResponse = await fetch(`http://localhost:3001/api/alimentacao/plano/${user.id_usuario}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-
-            if (planoResponse.ok) {
-              const planoData = await planoResponse.json();
-              setPlanoNutricional(planoData);
-              if (planoData.calorias_diarias) {
-                setTotalWaterGoal(planoData.agua_diaria || 2500);
-              }
-            }
-          }
-        }
-
-      } catch (err) {
-        console.error('Erro ao carregar dados de alimentação:', err);
-        setError('Erro ao carregar dados de alimentação');
-      } finally {
-        setLoading(false);
+        // Atualizar meals com os dados carregados
+        setMeals(prevMeals => prevMeals.map(meal => ({
+          ...meal,
+          items: mealsByType[meal.tipo] || []
+        })));
+      } else if (response.status === 404) {
+        // Não há diário para esta data, criar um novo
+        setDiarioAlimentar(null);
+        setWaterIntake(0);
+        setMeals(prevMeals => prevMeals.map(meal => ({
+          ...meal,
+          items: []
+        })));
       }
-    };
+    } catch (error) {
+      console.error('Erro ao carregar diário alimentar:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadDiarioAlimentar();
-  }, [user, currentDate, meals]);
-
-  // Calcular nutrição diária
   const dailyNutrition = {
     calories: meals.reduce((sum, meal) => sum + meal.items.reduce((s, item) => s + (item.calorias || 0), 0), 0),
-    targetCalories: planoNutricional?.calorias_diarias || 2200,
+    targetCalories: diarioAlimentar?.meta_calorias || 2200,
     protein: meals.reduce((sum, meal) => sum + meal.items.reduce((s, item) => s + (item.proteinas || 0), 0), 0),
-    targetProtein: planoNutricional?.proteinas_diarias || 150,
     carbs: meals.reduce((sum, meal) => sum + meal.items.reduce((s, item) => s + (item.carboidratos || 0), 0), 0),
-    targetCarbs: planoNutricional?.carboidratos_diarias || 250,
-    fat: meals.reduce((sum, meal) => sum + meal.items.reduce((s, item) => s + (item.gorduras || 0), 0), 0),
-    targetFat: planoNutricional?.gorduras_diarias || 70
+    fat: meals.reduce((sum, meal) => sum + meal.items.reduce((s, item) => s + (item.gorduras || 0), 0), 0)
   };
 
   const formatDate = (date) => {
@@ -196,47 +141,23 @@ const AlimentacaoPage = () => {
   const handleWaterChange = async (amount) => {
     const newWaterIntake = Math.max(0, Math.min(totalWaterGoal, waterIntake + amount));
     setWaterIntake(newWaterIntake);
-
-    // Atualizar no backend
-    if (diarioAlimentar?.id_registro) {
-      try {
-        await fetch(`http://localhost:3001/api/alimentacao/diario/${diarioAlimentar.id_registro}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            agua_ml: newWaterIntake
-          })
-        });
-      } catch (err) {
-        console.error('Erro ao atualizar consumo de água:', err);
-      }
-    }
-  };
-
-  const handleSaveWaterGoal = async () => {
-    setTotalWaterGoal(newGoal);
-    if (waterIntake > newGoal) setWaterIntake(newGoal);
-    setEditWaterGoal(false);
-
-    // Se há plano nutricional, atualizar no backend
-    if (planoNutricional?.id_plano_nutricional) {
-      try {
-        await fetch(`http://localhost:3001/api/alimentacao/plano/${planoNutricional.id_plano_nutricional}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            agua_diaria: newGoal
-          })
-        });
-      } catch (err) {
-        console.error('Erro ao atualizar meta de água:', err);
-      }
+    
+    try {
+      const dateString = currentDate.toISOString().split('T')[0];
+      
+      await fetch('http://localhost:3001/api/alimentacao/agua', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          data: dateString,
+          agua_ml: newWaterIntake
+        })
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar consumo de água:', error);
     }
   };
 
@@ -252,98 +173,72 @@ const AlimentacaoPage = () => {
   const handleSaveFood = async (newFood) => {
     try {
       const meal = meals.find(m => m.id === currentMeal);
-      if (!meal || !diarioAlimentar?.id_registro) return;
-
-      // Criar refeição se não existir
-      let refeicaoId;
-      const existingRefeicao = await fetch(`http://localhost:3001/api/alimentacao/refeicoes/${diarioAlimentar.id_registro}`, {
+      const dateString = currentDate.toISOString().split('T')[0];
+      
+      const response = await fetch('http://localhost:3001/api/alimentacao/refeicao', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          data: dateString,
+          tipo_refeicao: meal.tipo,
+          alimento: newFood
+        })
       });
 
-      if (existingRefeicao.ok) {
-        const refeicoes = await existingRefeicao.json();
-        const refeicaoExistente = refeicoes.find(r => r.tipo_refeicao === meal.tipo);
-        
-        if (refeicaoExistente) {
-          refeicaoId = refeicaoExistente.id_refeicao;
-        } else {
-          // Criar nova refeição
-          const novaRefeicaoResponse = await fetch(`http://localhost:3001/api/alimentacao/refeicoes`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-              id_registro: diarioAlimentar.id_registro,
-              tipo_refeicao: meal.tipo,
-              horario: new Date().toTimeString().split(' ')[0]
-            })
-          });
-
-          if (novaRefeicaoResponse.ok) {
-            const novaRefeicao = await novaRefeicaoResponse.json();
-            refeicaoId = novaRefeicao.id_refeicao;
-          }
-        }
+      if (response.ok) {
+        // Recarregar dados após adicionar alimento
+        await loadDiarioAlimentar();
       }
-
-      // Adicionar alimento à refeição
-      if (refeicaoId) {
-        await fetch(`http://localhost:3001/api/alimentacao/alimento-refeicao`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            id_refeicao: refeicaoId,
-            id_alimento: newFood.id_alimento,
-            quantidade: newFood.quantidade,
-            porcao: newFood.porcao
-          })
-        });
-
-        // Atualizar estado local
-        setMeals(prevMeals => prevMeals.map(meal => 
-          meal.id === currentMeal 
-            ? { ...meal, items: [...meal.items, newFood] } 
-            : meal
-        ));
-      }
-
-    } catch (err) {
-      console.error('Erro ao adicionar alimento:', err);
+    } catch (error) {
+      console.error('Erro ao adicionar alimento:', error);
     }
-
+    
     setShowAddFood(false);
   };
 
   const handleRemoveFood = async (mealId, foodIndex) => {
     try {
       const meal = meals.find(m => m.id === mealId);
-      const food = meal?.items[foodIndex];
+      const food = meal.items[foodIndex];
       
-      if (food?.id_alimento_refeicao) {
-        await fetch(`http://localhost:3001/api/alimentacao/alimento-refeicao/${food.id_alimento_refeicao}`, {
+      if (food.id_alimento_refeicao) {
+        await fetch(`http://localhost:3001/api/alimentacao/refeicao/${food.id_alimento_refeicao}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           }
         });
+
+        // Recarregar dados após remover alimento
+        await loadDiarioAlimentar();
       }
+    } catch (error) {
+      console.error('Erro ao remover alimento:', error);
+    }
+  };
 
-      // Atualizar estado local
-      setMeals(prevMeals => prevMeals.map(meal => 
-        meal.id === mealId 
-          ? { ...meal, items: meal.items.filter((_, index) => index !== foodIndex) } 
-          : meal
-      ));
-
-    } catch (err) {
-      console.error('Erro ao remover alimento:', err);
+  const handleUpdateWaterGoal = async () => {
+    try {
+      await fetch('http://localhost:3001/api/user/meta-agua', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          meta_agua_ml: newGoal
+        })
+      });
+      
+      setTotalWaterGoal(newGoal);
+      if (waterIntake > newGoal) setWaterIntake(newGoal);
+      setEditWaterGoal(false);
+    } catch (error) {
+      console.error('Erro ao atualizar meta de água:', error);
     }
   };
 
@@ -353,21 +248,7 @@ const AlimentacaoPage = () => {
         <NavBar title="THORC FIT" showBack onBack={() => navigate('/home')} />
         <S.Container>
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <p>Carregando dados de alimentação...</p>
-          </div>
-        </S.Container>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <NavBar title="THORC FIT" showBack onBack={() => navigate('/home')} />
-        <S.Container>
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>
-            <p>{error}</p>
-            <button onClick={() => window.location.reload()}>Tentar novamente</button>
+            Carregando dados alimentares...
           </div>
         </S.Container>
       </>
@@ -427,10 +308,7 @@ const AlimentacaoPage = () => {
           {editWaterGoal && (
             <S.EditPopup>
               <p>
-                📢 {vinculoNutricional ? 
-                  <strong>Sua nutricionista</strong> : 
-                  <strong>Sistema</strong>
-                } recomenda o limite diário de água com base nos seus dados.
+                📢 <strong>Sua nutricionista</strong> recomenda o limite diário de água com base nos seus dados.
               </p>
               <label htmlFor="metaAgua">Nova meta (em ml):</label>
               <input
@@ -442,7 +320,7 @@ const AlimentacaoPage = () => {
                 onChange={(e) => setNewGoal(parseInt(e.target.value))}
               />
               <div>
-                <button onClick={handleSaveWaterGoal}>
+                <button onClick={handleUpdateWaterGoal}>
                   Salvar
                 </button>
                 <button onClick={() => setEditWaterGoal(false)}>Cancelar</button>
@@ -518,16 +396,6 @@ const AlimentacaoPage = () => {
             onRemoveFood={handleRemoveFood}
           />
         ))}
-
-        {/* Informação sobre vínculo nutricional */}
-        {vinculoNutricional && (
-          <S.NutritionistInfo>
-            <p>📋 Acompanhado por: <strong>{vinculoNutricional.nutricionista?.nome}</strong></p>
-            {planoNutricional && (
-              <p>🎯 Plano: {planoNutricional.objetivo}</p>
-            )}
-          </S.NutritionistInfo>
-        )}
       </S.Container>
 
       {/* Popup para adicionar alimento */}
