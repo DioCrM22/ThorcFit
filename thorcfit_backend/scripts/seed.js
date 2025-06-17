@@ -277,6 +277,9 @@ async function seedDatabase() {
 
     seedDatabase();
 
+<<<<<<< HEAD
 
     //caso não de certo utilize os "dados testes do sql.txt" não fica insistindo no erro.
+=======
+>>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
     */
