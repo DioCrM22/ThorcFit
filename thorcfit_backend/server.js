@@ -130,10 +130,6 @@ async function startServer() {
       console.log(`🌐 API disponível em: http://localhost:${PORT}/api`);
       console.log(`💚 Health check: http://localhost:${PORT}/health`);
       console.log(`📚 Documentação: http://localhost:${PORT}/api`);
-<<<<<<< HEAD
-      
-=======
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
     });
 
   } catch (error) {

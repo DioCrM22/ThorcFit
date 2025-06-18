@@ -3,15 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
-<<<<<<< HEAD
--- Tempo de geração: 17/06/2025 às 20:51
+-- Tempo de geração: 18/06/2025 às 04:44
 -- Versão do servidor: 10.4.28-MariaDB
 -- Versão do PHP: 8.2.4
-=======
--- Tempo de geração: 17/06/2025 às 15:34
--- Versão do servidor: 10.4.32-MariaDB
--- Versão do PHP: 8.2.12
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -60,19 +54,11 @@ CREATE TABLE `alimento` (
 -- Despejando dados para a tabela `alimento`
 --
 
-<<<<<<< HEAD
 INSERT INTO `alimento` (`id_alimento`, `nome`, `calorias`, `proteinas`, `carboidratos`, `gorduras`, `fibras`, `unidade_medida`, `created_at`, `updated_at`) VALUES
 (1, 'Arroz Branco Cozido', 130.00, 2.70, 28.20, 0.30, NULL, 'g', '2025-06-16 20:04:06', '2025-06-16 20:04:44'),
 (2, 'Peito de Frango Grelhado', 165.00, 31.00, 0.00, 3.60, NULL, 'g', '2025-06-16 20:04:06', '2025-06-16 20:04:44'),
 (3, 'Brócolis Cozido', 55.00, 3.70, 11.20, 0.60, NULL, 'g', '2025-06-16 20:04:06', '2025-06-16 20:04:44'),
 (4, 'Ovo Cozido', 155.00, 13.00, 1.10, 11.00, NULL, 'g', '2025-06-16 20:04:06', '2025-06-16 20:04:44');
-=======
-INSERT INTO `alimento` (`id_alimento`, `nome`, `calorias`, `proteinas`, `carboidratos`, `gorduras`, `porcao_padrao`) VALUES
-(1, 'Arroz Branco Cozido', 130.00, 2.70, 28.20, 0.30, '100g'),
-(2, 'Peito de Frango Grelhado', 165.00, 31.00, 0.00, 3.60, '100g'),
-(3, 'Brócolis Cozido', 55.00, 3.70, 11.20, 0.60, '100g'),
-(4, 'Ovo Cozido', 155.00, 13.00, 1.10, 11.00, '1 unidade (50g)');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -130,17 +116,10 @@ CREATE TABLE `exercicio` (
 -- Despejando dados para a tabela `exercicio`
 --
 
-<<<<<<< HEAD
 INSERT INTO `exercicio` (`id_exercicio`, `nome`, `descricao`, `grupo_muscular`, `equipamento_necesario`, `nivel_dificuldade`, `instrucoes`, `gif_url`, `created_at`, `updated_at`) VALUES
 (1, 'Supino Reto com Barra', 'Exercício para peito, ombros e tríceps.', 'Peito', 'Barra, Anilhas, Banco', 'intermediario', NULL, NULL, '2025-06-16 20:17:21', '2025-06-16 20:17:21'),
 (2, 'Agachamento Livre', 'Exercício composto para pernas e glúteos.', 'Pernas', 'Nenhum (opcional: barra e anilhas)', 'intermediario', NULL, NULL, '2025-06-16 20:17:21', '2025-06-16 20:17:21'),
 (3, 'Remada Curvada', 'Exercício para costas e bíceps.', 'Costas', 'Barra, Anilhas', 'intermediario', NULL, NULL, '2025-06-16 20:17:21', '2025-06-16 20:17:21');
-=======
-INSERT INTO `exercicio` (`id_exercicio`, `nome`, `descricao`, `grupo_muscular`, `equipamento_necesario`) VALUES
-(1, 'Supino Reto com Barra', 'Exercício para peito, ombros e tríceps.', 'Peito', 'Barra, Anilhas, Banco'),
-(2, 'Agachamento Livre', 'Exercício composto para pernas e glúteos.', 'Pernas', 'Nenhum (opcional: barra e anilhas)'),
-(3, 'Remada Curvada', 'Exercício para costas e bíceps.', 'Costas', 'Barra, Anilhas');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -242,15 +221,9 @@ CREATE TABLE `nutricionista` (
 -- Despejando dados para a tabela `nutricionista`
 --
 
-<<<<<<< HEAD
 INSERT INTO `nutricionista` (`id_nutricionista`, `id_usuario`, `crn`, `especialidade`, `bio`, `preco_consulta`, `created_at`, `updated_at`) VALUES
 (1, 3, 'CRN-12345', 'Nutrição Esportiva', 'Nutricionista especializado em nutrição esportiva e emagrecimento.', 150.00, '2025-06-16 20:03:01', '2025-06-16 20:03:01'),
 (2, 5, 'CRN-67890', 'Nutrição Clínica', 'Nutricionista clínico com foco em saúde intestinal.', 120.00, '2025-06-16 20:03:01', '2025-06-16 20:03:01');
-=======
-INSERT INTO `nutricionista` (`id_nutricionista`, `id_usuario`, `crn`, `especialidade`, `bio`, `preco_consulta`) VALUES
-(1, 3, 'CRN-12345', 'Nutrição Esportiva', 'Nutricionista especializado em nutrição esportiva e emagrecimento.', 150.00),
-(2, 5, 'CRN-67890', 'Nutrição Clínica', 'Nutricionista clínico com foco em saúde intestinal.', 120.00);
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -265,13 +238,8 @@ CREATE TABLE `personal_trainer` (
   `especialidade` text DEFAULT NULL,
   `bio` text DEFAULT NULL,
   `preco_sessao` decimal(8,2) DEFAULT NULL,
-<<<<<<< HEAD
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
-=======
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -279,13 +247,8 @@ CREATE TABLE `personal_trainer` (
 --
 
 INSERT INTO `personal_trainer` (`id_personal`, `id_usuario`, `cref`, `especialidade`, `bio`, `preco_sessao`, `created_at`, `updated_at`) VALUES
-<<<<<<< HEAD
 (1, 4, 'CREF-54321', 'Treinamento Funcional', 'Personal trainer com experiência em treinamento funcional e hipertrofia.', 80.00, '2025-06-16 20:03:08', '2025-06-16 20:03:08'),
 (2, 6, 'CREF-98765', 'Condicionamento Físico', 'Personal trainer focada em condicionamento físico e bem-estar.', 70.00, '2025-06-16 20:03:08', '2025-06-16 20:03:08');
-=======
-(1, 4, 'CREF-54321', 'Treinamento Funcional', 'Personal trainer com experiência em treinamento funcional e hipertrofia.', 80.00, '2025-06-17 10:32:00', '2025-06-17 10:32:00'),
-(2, 6, 'CREF-98765', 'Condicionamento Físico', 'Personal trainer focada em condicionamento físico e bem-estar.', 70.00, '2025-06-17 10:32:00', '2025-06-17 10:32:00');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -297,7 +260,6 @@ CREATE TABLE `plano_nutricional` (
   `id_plano_nutricional` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `calorias_diarias` int(11) DEFAULT NULL,
-<<<<<<< HEAD
   `proteinas_diarias` decimal(8,2) DEFAULT NULL,
   `carboidratos_diarias` decimal(8,2) DEFAULT NULL,
   `gorduras_diarias` decimal(8,2) DEFAULT NULL,
@@ -309,17 +271,6 @@ CREATE TABLE `plano_nutricional` (
   `descricao` text DEFAULT NULL,
   `data_inicio` date DEFAULT NULL,
   `data_fim` date DEFAULT NULL
-=======
-  `proteinas_diarias` int(11) DEFAULT NULL,
-  `carboidratos_diarias` int(11) DEFAULT NULL,
-  `gorduras_diarias` int(11) DEFAULT NULL,
-  `objetivo` text DEFAULT NULL,
-  `observacoes` text DEFAULT NULL,
-  `status` enum('ativo','inativo','em_avaliacao') DEFAULT 'ativo',
-  `id_nutricionista` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -335,17 +286,12 @@ CREATE TABLE `plano_treino` (
   `id_criador_personal` int(11) DEFAULT NULL,
   `nome` varchar(100) NOT NULL,
   `data_criacao` date NOT NULL,
-<<<<<<< HEAD
   `descricao` text DEFAULT NULL,
   `status` enum('ativo','inativo','concluido') NOT NULL DEFAULT 'ativo',
   `nivel_dificuldade` enum('iniciante','intermediario','avancado') DEFAULT NULL,
   `duracao_estimada` int(11) DEFAULT NULL COMMENT 'Duração em minutos',
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
-=======
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -382,16 +328,13 @@ CREATE TABLE `usuario` (
   `id_objetivo` enum('manutenção','ganho','perca') DEFAULT NULL,
   `google_id` varchar(255) DEFAULT NULL,
   `avatar` varchar(255) DEFAULT NULL,
-  `metodo_login` varchar(20) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `metodo_login` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `usuario`
 --
 
-<<<<<<< HEAD
 INSERT INTO `usuario` (`id_usuario`, `nome`, `email`, `senha_hash`, `data_nascimento`, `genero`, `telefone`, `data_cadastro`, `id_objetivo`, `google_id`, `avatar`, `metodo_login`) VALUES
 (1, 'João Silva', 'joao@teste.com', '$2b$10$example_hash_1', '1990-05-15', 'masculino', '(11) 99999-1111', '2025-06-14 19:51:53', 'ganho', NULL, NULL, 'email'),
 (2, 'Maria Santos', 'maria@teste.com', '$2b$10$example_hash_2', '1985-08-22', 'feminino', '(11) 99999-2222', '2025-06-14 19:51:53', 'perca', NULL, NULL, 'email'),
@@ -399,15 +342,6 @@ INSERT INTO `usuario` (`id_usuario`, `nome`, `email`, `senha_hash`, `data_nascim
 (4, 'Ana Personal Trainer', 'ana.personal@teste.com', '$2b$10$example_hash_4', '1988-12-05', 'feminino', '(11) 99999-4444', '2025-06-14 19:51:53', 'manutenção', NULL, NULL, 'email'),
 (5, 'Dr. Pedro Nutricionista', 'pedro.nutri@teste.com', '$2b$10$example_hash_5', '1975-07-18', 'masculino', '(11) 99999-5555', '2025-06-14 19:51:53', 'manutenção', NULL, NULL, 'email'),
 (6, 'Mariana Personal Trainer', 'mariana.personal@teste.com', '$2b$10$example_hash_6', '1992-01-20', 'feminino', '(11) 99999-6666', '2025-06-14 19:51:53', 'ganho', NULL, NULL, 'email');
-=======
-INSERT INTO `usuario` (`id_usuario`, `nome`, `email`, `senha_hash`, `data_nascimento`, `genero`, `telefone`, `data_cadastro`, `id_objetivo`, `google_id`, `avatar`, `metodo_login`, `created_at`, `updated_at`) VALUES
-(1, 'João Silva', 'joao@teste.com', '$2b$10$example_hash_1', '1990-05-15', 'masculino', '(11) 99999-1111', '2025-06-17 10:25:37', 'ganho', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26'),
-(2, 'Maria Santos', 'maria@teste.com', '$2b$10$example_hash_2', '1985-08-22', 'feminino', '(11) 99999-2222', '2025-06-17 10:25:37', 'perca', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26'),
-(3, 'Dr. Carlos Nutricionista', 'carlos.nutri@teste.com', '$2b$10$example_hash_3', '1980-03-10', 'masculino', '(11) 99999-3333', '2025-06-17 10:25:37', 'manutenção', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26'),
-(4, 'Ana Personal Trainer', 'ana.personal@teste.com', '$2b$10$example_hash_4', '1988-12-05', 'feminino', '(11) 99999-4444', '2025-06-17 10:25:37', 'manutenção', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26'),
-(5, 'Dr. Pedro Nutricionista', 'pedro.nutri@teste.com', '$2b$10$example_hash_5', '1975-07-18', 'masculino', '(11) 99999-5555', '2025-06-17 10:25:37', 'manutenção', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26'),
-(6, 'Mariana Personal Trainer', 'mariana.personal@teste.com', '$2b$10$example_hash_6', '1992-01-20', 'feminino', '(11) 99999-6666', '2025-06-17 10:25:37', 'ganho', NULL, NULL, 'email', '2025-06-17 10:31:26', '2025-06-17 10:31:26');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -421,32 +355,19 @@ CREATE TABLE `vinculo_nutricional` (
   `id_nutricionista` int(11) NOT NULL,
   `data_inicio` date NOT NULL,
   `data_fim` date DEFAULT NULL,
-<<<<<<< HEAD
   `status` enum('pendente','ativo','inativo','cancelado') NOT NULL DEFAULT 'pendente',
   `observacoes` text DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
-=======
-  `status` enum('ativo','inativo','suspenso') DEFAULT NULL,
-  `permissao_dados` enum('restrito','completo') DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `vinculo_nutricional`
 --
 
-<<<<<<< HEAD
 INSERT INTO `vinculo_nutricional` (`id_vinculo`, `id_usuario`, `id_nutricionista`, `data_inicio`, `data_fim`, `status`, `observacoes`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, '2025-06-14', NULL, 'ativo', NULL, '2025-06-16 20:17:43', '2025-06-16 20:17:43'),
 (2, 2, 2, '2025-06-14', NULL, '', NULL, '2025-06-16 20:17:43', '2025-06-16 20:17:43');
-=======
-INSERT INTO `vinculo_nutricional` (`id_vinculo`, `id_usuario`, `id_nutricionista`, `data_inicio`, `data_fim`, `status`, `permissao_dados`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, '2025-06-17', NULL, 'ativo', 'completo', '2025-06-17 10:32:17', '2025-06-17 10:32:17'),
-(2, 2, 2, '2025-06-17', NULL, '', 'restrito', '2025-06-17 10:32:17', '2025-06-17 10:32:17');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 -- --------------------------------------------------------
 
@@ -460,31 +381,19 @@ CREATE TABLE `vinculo_treino` (
   `id_personal` int(11) NOT NULL,
   `data_inicio` date NOT NULL,
   `data_fim` date DEFAULT NULL,
-<<<<<<< HEAD
   `status` enum('pendente','ativo','inativo','cancelado') NOT NULL DEFAULT 'pendente',
   `observacoes` text DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
-=======
-  `status` enum('ativo','inativo','suspenso') DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `vinculo_treino`
 --
 
-<<<<<<< HEAD
 INSERT INTO `vinculo_treino` (`id_vinculo`, `id_usuario`, `id_personal`, `data_inicio`, `data_fim`, `status`, `observacoes`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, '2025-06-14', NULL, 'ativo', NULL, '2025-06-16 20:17:59', '2025-06-16 20:17:59'),
 (2, 2, 2, '2025-06-14', NULL, '', NULL, '2025-06-16 20:17:59', '2025-06-16 20:17:59');
-=======
-INSERT INTO `vinculo_treino` (`id_vinculo`, `id_usuario`, `id_personal`, `data_inicio`, `data_fim`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, '2025-06-17', NULL, 'ativo', '2025-06-17 10:32:10', '2025-06-17 10:32:10'),
-(2, 2, 2, '2025-06-17', NULL, '', '2025-06-17 10:32:10', '2025-06-17 10:32:10');
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 --
 -- Índices para tabelas despejadas
@@ -601,7 +510,9 @@ ALTER TABLE `usuario`
   ADD UNIQUE KEY `email_9` (`email`),
   ADD UNIQUE KEY `email_10` (`email`),
   ADD UNIQUE KEY `email_11` (`email`),
-  ADD UNIQUE KEY `email_12` (`email`);
+  ADD UNIQUE KEY `email_12` (`email`),
+  ADD UNIQUE KEY `email_13` (`email`),
+  ADD UNIQUE KEY `email_14` (`email`);
 
 --
 -- Índices de tabela `vinculo_nutricional`
@@ -628,15 +539,6 @@ ALTER TABLE `vinculo_treino`
 --
 ALTER TABLE `alimento`
   MODIFY `id_alimento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-<<<<<<< HEAD
-=======
-
---
--- AUTO_INCREMENT de tabela `alimento_refeicao`
---
-ALTER TABLE `alimento_refeicao`
-  MODIFY `id_alimento_refeicao` int(11) NOT NULL AUTO_INCREMENT;
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 --
 -- AUTO_INCREMENT de tabela `diario_alimentar`
@@ -649,7 +551,6 @@ ALTER TABLE `diario_alimentar`
 --
 ALTER TABLE `exercicio`
   MODIFY `id_exercicio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-<<<<<<< HEAD
 
 --
 -- AUTO_INCREMENT de tabela `historico_treino`
@@ -662,8 +563,6 @@ ALTER TABLE `historico_treino`
 --
 ALTER TABLE `metas_usuario`
   MODIFY `id_meta` int(11) NOT NULL AUTO_INCREMENT;
-=======
->>>>>>> 305d198b843883177a7a9bf7213677e7c0b0d109
 
 --
 -- AUTO_INCREMENT de tabela `metricas_usuario`
@@ -771,15 +670,15 @@ ALTER TABLE `personal_trainer`
 -- Restrições para tabelas `plano_nutricional`
 --
 ALTER TABLE `plano_nutricional`
-  ADD CONSTRAINT `plano_nutricional_ibfk_10` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `plano_nutricional_ibfk_9` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `plano_nutricional_ibfk_13` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `plano_nutricional_ibfk_14` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `plano_treino`
 --
 ALTER TABLE `plano_treino`
-  ADD CONSTRAINT `plano_treino_ibfk_10` FOREIGN KEY (`id_criador_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `plano_treino_ibfk_9` FOREIGN KEY (`id_criador_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `plano_treino_ibfk_13` FOREIGN KEY (`id_criador_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `plano_treino_ibfk_14` FOREIGN KEY (`id_criador_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `refeicao`
@@ -791,15 +690,15 @@ ALTER TABLE `refeicao`
 -- Restrições para tabelas `vinculo_nutricional`
 --
 ALTER TABLE `vinculo_nutricional`
-  ADD CONSTRAINT `vinculo_nutricional_ibfk_7` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `vinculo_nutricional_ibfk_8` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `vinculo_nutricional_ibfk_11` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `vinculo_nutricional_ibfk_12` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `vinculo_treino`
 --
 ALTER TABLE `vinculo_treino`
-  ADD CONSTRAINT `vinculo_treino_ibfk_5` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `vinculo_treino_ibfk_6` FOREIGN KEY (`id_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `vinculo_treino_ibfk_10` FOREIGN KEY (`id_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `vinculo_treino_ibfk_9` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
