@@ -1,52 +1,23 @@
 const { body, validationResult } = require('express-validator');
 const { Usuario, Nutricionista, PersonalTrainer } = require('../models');
+const { Op } = require('sequelize');
 
 class UserController {
-  // Validações para atualização de perfil
   static validateUpdateProfile = [
-    body('nome')
-      .optional()
-      .trim()
-      .isLength({ min: 2, max: 100 })
-      .withMessage('Nome deve ter entre 2 e 100 caracteres'),
-    body('telefone')
-      .optional()
-      .trim()
-      .isLength({ max: 20 })
-      .withMessage('Telefone deve ter no máximo 20 caracteres'),
-    body('genero')
-      .optional()
-      .isIn(['masculino', 'feminino', 'outro'])
-      .withMessage('Gênero inválido'),
-    body('data_nascimento')
-      .optional()
-      .isISO8601()
-      .withMessage('Data de nascimento inválida')
+    body('nome').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
+    body('telefone').optional().trim().isLength({ max: 20 }).withMessage('Telefone deve ter no máximo 20 caracteres'),
+    body('genero').optional().isIn(['masculino', 'feminino', 'outro']).withMessage('Gênero inválido'),
+    body('data_nascimento').optional().isISO8601().withMessage('Data de nascimento inválida')
   ];
 
-  // Atualizar perfil do usuário
   static async updateProfile(req, res) {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          error: 'Dados inválidos',
-          details: errors.array()
-        });
+        return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
       }
 
-      const { 
-        nome, 
-        telefone, 
-        genero, 
-        data_nascimento,
-        foto_perfil,
-        bio,
-        especialidades,
-        registro_profissional,
-        preco_consulta,
-        preco_sessao
-      } = req.body;
+      const { nome, telefone, genero, data_nascimento, foto_perfil, bio, especialidades, registro_profissional, preco_consulta, preco_sessao } = req.body;
 
       const usuario = await Usuario.findByPk(req.userId, {
         include: [
@@ -56,12 +27,9 @@ class UserController {
       });
 
       if (!usuario) {
-        return res.status(404).json({
-          error: 'Usuário não encontrado'
-        });
+        return res.status(404).json({ error: 'Usuário não encontrado' });
       }
 
-      // Atualizar dados básicos do usuário
       const dadosAtualizacao = {};
       if (nome !== undefined) dadosAtualizacao.nome = nome;
       if (telefone !== undefined) dadosAtualizacao.telefone = telefone;
@@ -71,7 +39,6 @@ class UserController {
 
       await usuario.update(dadosAtualizacao);
 
-      // Atualizar dados profissionais se aplicável
       if (usuario.nutricionista && (bio !== undefined || especialidades !== undefined || registro_profissional !== undefined || preco_consulta !== undefined)) {
         const dadosNutricionista = {};
         if (bio !== undefined) dadosNutricionista.bio = bio;
@@ -92,7 +59,6 @@ class UserController {
         await usuario.personalTrainer.update(dadosPersonal);
       }
 
-      // Buscar usuário atualizado
       const usuarioAtualizado = await Usuario.findByPk(req.userId, {
         attributes: { exclude: ['senha_hash'] },
         include: [
@@ -108,13 +74,10 @@ class UserController {
 
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Obter perfil de outro usuário (público)
   static async getPublicProfile(req, res) {
     try {
       const { id } = req.params;
@@ -122,51 +85,45 @@ class UserController {
       const usuario = await Usuario.findByPk(id, {
         attributes: ['id_usuario', 'nome', 'foto_perfil'],
         include: [
-          { 
-            model: Nutricionista, 
+          {
+            model: Nutricionista,
             as: 'nutricionista',
             attributes: ['bio', 'especialidades', 'preco_consulta']
           },
-          { 
-            model: PersonalTrainer, 
+          {
+            model: PersonalTrainer,
             as: 'personalTrainer',
             attributes: ['bio', 'especialidades', 'preco_sessao']
           }
         ]
       });
 
-      if (!usuario || !usuario.ativo) {
-        return res.status(404).json({
-          error: 'Usuário não encontrado'
-        });
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
       }
 
-      res.json({
-        usuario: usuario.toJSON()
-      });
+      res.json({ usuario: usuario.toJSON() });
 
     } catch (error) {
       console.error('Erro ao buscar perfil público:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Buscar profissionais (nutricionistas e personal trainers)
   static async searchProfessionals(req, res) {
     try {
       const { tipo, busca, limite = 20, pagina = 1 } = req.query;
 
       const offset = (pagina - 1) * limite;
-      const whereClause = { ativo: true };
-      
+
+      const whereClause = {};
+
       if (busca) {
-        whereClause.nome = { [require('sequelize').Op.iLike]: `%${busca}%` };
+        whereClause.nome = { [Op.like]: `%${busca}%` };
       }
 
-      let include = [];
-      
+      const include = [];
+
       if (tipo === 'nutricionista' || !tipo) {
         include.push({
           model: Nutricionista,
@@ -174,7 +131,7 @@ class UserController {
           required: tipo === 'nutricionista'
         });
       }
-      
+
       if (tipo === 'personal' || !tipo) {
         include.push({
           model: PersonalTrainer,
@@ -192,10 +149,7 @@ class UserController {
         order: [['nome', 'ASC']]
       });
 
-      // Filtrar apenas usuários que são profissionais
-      const profissionaisFiltrados = profissionais.filter(usuario => 
-        usuario.nutricionista || usuario.personalTrainer
-      );
+      const profissionaisFiltrados = profissionais.filter(usuario => usuario.nutricionista || usuario.personalTrainer);
 
       res.json({
         profissionais: profissionaisFiltrados,
@@ -206,49 +160,26 @@ class UserController {
 
     } catch (error) {
       console.error('Erro ao buscar profissionais:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Desativar conta
   static async deactivateAccount(req, res) {
     try {
-      const usuario = await Usuario.findByPk(req.userId);
-
-      if (!usuario) {
-        return res.status(404).json({
-          error: 'Usuário não encontrado'
-        });
-      }
-
-      await usuario.update({ ativo: false });
-
-      res.json({
-        message: 'Conta desativada com sucesso'
+      return res.status(501).json({
+        error: 'Funcionalidade de desativar conta não implementada. Remova ou ajuste esse endpoint se não for usar.'
       });
-
     } catch (error) {
       console.error('Erro ao desativar conta:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Obter estatísticas do usuário
   static async getUserStats(req, res) {
     try {
       const { DiarioAlimentar, PlanoTreino, MetricasUsuario } = require('../models');
 
-      // Buscar estatísticas básicas
-      const [
-        totalDiarios,
-        totalPlanos,
-        totalMetricas,
-        ultimaMetrica
-      ] = await Promise.all([
+      const [totalDiarios, totalPlanos, totalMetricas, ultimaMetrica] = await Promise.all([
         DiarioAlimentar.count({ where: { id_usuario: req.userId } }),
         PlanoTreino.count({ where: { id_criador_usuario: req.userId } }),
         MetricasUsuario.count({ where: { id_usuario: req.userId } }),
@@ -269,12 +200,9 @@ class UserController {
 
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 }
 
 module.exports = UserController;
-

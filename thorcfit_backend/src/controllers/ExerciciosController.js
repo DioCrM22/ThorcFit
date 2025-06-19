@@ -8,7 +8,6 @@ class ExerciciosController {
       const { 
         busca, 
         grupo_muscular, 
-        nivel_dificuldade, 
         limite = 50, 
         pagina = 1 
       } = req.query;
@@ -25,9 +24,6 @@ class ExerciciosController {
         whereClause.grupo_muscular = grupo_muscular;
       }
 
-      if (nivel_dificuldade) {
-        whereClause.nivel_dificuldade = nivel_dificuldade;
-      }
 
       const { count, rows: exercicios } = await Exercicio.findAndCountAll({
         where: whereClause,
@@ -52,7 +48,6 @@ class ExerciciosController {
         filtros_aplicados: {
           busca,
           grupo_muscular,
-          nivel_dificuldade
         }
       });
 
@@ -100,7 +95,7 @@ class ExerciciosController {
         where: {
           nome: { [Op.iLike]: `%${q.trim()}%` }
         },
-        attributes: ['id_exercicio', 'nome', 'grupo_muscular', 'nivel_dificuldade'],
+        attributes: ['id_exercicio', 'nome', 'grupo_muscular'],
         limit: parseInt(limite),
         order: [['nome', 'ASC']]
       });
@@ -152,24 +147,12 @@ class ExerciciosController {
           group: ['grupo_muscular'],
           order: [['grupo_muscular', 'ASC']]
         }),
-        Exercicio.findAll({
-          attributes: [
-            'nivel_dificuldade',
-            [require('sequelize').fn('COUNT', require('sequelize').col('id_exercicio')), 'total']
-          ],
-          group: ['nivel_dificuldade'],
-          order: [['nivel_dificuldade', 'ASC']]
-        })
       ]);
 
       res.json({
         total_exercicios: totalExercicios,
         total_grupos_musculares: gruposMusculares.length,
         grupos_musculares: gruposMusculares.map(g => g.grupo_muscular),
-        exercicios_por_nivel: exerciciosPorNivel.reduce((acc, item) => {
-          acc[item.nivel_dificuldade] = parseInt(item.dataValues.total);
-          return acc;
-        }, {})
       });
 
     } catch (error) {
@@ -188,7 +171,6 @@ class ExerciciosController {
         descricao,
         grupo_muscular,
         equipamento_necesario,
-        nivel_dificuldade,
         instrucoes,
         gif_url
       } = req.body;
@@ -216,7 +198,6 @@ class ExerciciosController {
         descricao,
         grupo_muscular,
         equipamento_necesario,
-        nivel_dificuldade: nivel_dificuldade || 'intermediario',
         instrucoes,
         gif_url
       });
@@ -244,7 +225,6 @@ class ExerciciosController {
         descricao,
         grupo_muscular,
         equipamento_necesario,
-        nivel_dificuldade,
         instrucoes,
         gif_url
       } = req.body;
@@ -278,7 +258,6 @@ class ExerciciosController {
         descricao: descricao !== undefined ? descricao : exercicio.descricao,
         grupo_muscular: grupo_muscular || exercicio.grupo_muscular,
         equipamento_necesario: equipamento_necesario !== undefined ? equipamento_necesario : exercicio.equipamento_necesario,
-        nivel_dificuldade: nivel_dificuldade || exercicio.nivel_dificuldade,
         instrucoes: instrucoes !== undefined ? instrucoes : exercicio.instrucoes,
         gif_url: gif_url !== undefined ? gif_url : exercicio.gif_url
       });

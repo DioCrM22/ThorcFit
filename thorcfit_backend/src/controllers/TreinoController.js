@@ -83,7 +83,7 @@ class TreinoController {
 
       // Buscar exercícios disponíveis
       const exerciciosDisponiveis = await Exercicio.findAll({
-        attributes: ['id_exercicio', 'nome', 'grupo_muscular', 'nivel_dificuldade'],
+        attributes: ['id_exercicio', 'nome', 'grupo_muscular'],
         order: [['grupo_muscular', 'ASC'], ['nome', 'ASC']]
       });
 
@@ -101,7 +101,6 @@ class TreinoController {
               id_exercicio: exercicio.id_exercicio,
               nome: exercicio.nome,
               grupo_muscular: exercicio.grupo_muscular,
-              nivel_dificuldade: exercicio.nivel_dificuldade
             }
           }))
         })),
@@ -128,7 +127,7 @@ class TreinoController {
         });
       }
 
-      const { nome, observacoes, exercicios, nivel_dificuldade, duracao_estimada } = req.body;
+      const { nome, observacoes, exercicios, duracao_estimada } = req.body;
 
       // Criar plano
       const novoPlano = await PlanoTreino.create({
@@ -138,7 +137,6 @@ class TreinoController {
         descricao: observacoes,
         data_criacao: new Date(),
         status: 'ativo',
-        nivel_dificuldade,
         duracao_estimada
       });
 
@@ -255,7 +253,6 @@ class TreinoController {
               descricao: exercicio.descricao,
               grupo_muscular: exercicio.grupo_muscular,
               equipamento_necesario: exercicio.equipamento_necesario,
-              nivel_dificuldade: exercicio.nivel_dificuldade,
               instrucoes: exercicio.instrucoes,
               gif_url: exercicio.gif_url
             }
@@ -275,7 +272,7 @@ class TreinoController {
   static async updatePlano(req, res) {
     try {
       const { id } = req.params;
-      const { nome, observacoes, exercicios, nivel_dificuldade, duracao_estimada } = req.body;
+      const { nome, observacoes, exercicios, duracao_estimada } = req.body;
 
       const plano = await PlanoTreino.findByPk(id);
 
@@ -296,7 +293,6 @@ class TreinoController {
       await plano.update({
         nome: nome || plano.nome,
         descricao: observacoes !== undefined ? observacoes : plano.descricao,
-        nivel_dificuldade: nivel_dificuldade || plano.nivel_dificuldade,
         duracao_estimada: duracao_estimada || plano.duracao_estimada
       });
 
@@ -386,7 +382,6 @@ class TreinoController {
         descricao: planoOriginal.descricao,
         data_criacao: new Date(),
         status: 'ativo',
-        nivel_dificuldade: planoOriginal.nivel_dificuldade,
         duracao_estimada: planoOriginal.duracao_estimada
       });
 

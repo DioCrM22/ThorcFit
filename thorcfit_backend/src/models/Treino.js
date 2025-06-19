@@ -23,11 +23,6 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    nivel_dificuldade: {
-      type: DataTypes.ENUM("iniciante", "intermediario", "avancado"),
-      allowNull: true,
-      defaultValue: "intermediario",
-    },
     instrucoes: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -78,10 +73,6 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM("ativo", "inativo", "concluido"),
       allowNull: false,
       defaultValue: "ativo",
-    },
-    nivel_dificuldade: {
-      type: DataTypes.ENUM("iniciante", "intermediario", "avancado"),
-      allowNull: true,
     },
     duracao_estimada: {
       type: DataTypes.INTEGER,
