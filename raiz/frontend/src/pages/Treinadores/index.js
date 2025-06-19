@@ -1,11 +1,10 @@
 // src/pages/Treinadores/index.js
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiActivity, FiUser, FiClock, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
+import { FiSearch, FiActivity, FiUser, FiTrash2, FiEye } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import TrainerSidebar from './Sidebar';
-import EditarTreino from '../../components/EditarTreino';
 import NavBar from '../../components/NavBar';
 import {
   PageContainer,
@@ -23,6 +22,7 @@ import {
   PlanButton,
   EmptyMessage,
   HistoryButton,
+
   DeleteButton
 } from './styles';
 
@@ -161,7 +161,6 @@ const TrainerPage = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
-
 
 
   const handleCreateWorkout = (userId) => {
@@ -419,11 +418,7 @@ const TrainerPage = () => {
                     maxHeight: '95vh',
                   }}
                 >
-                  <EditarTreino
-                    userId={popupTreino.userId}
-                    workoutId={popupTreino.workoutId}
-                    onClose={() => setPopupTreino({ userId: null, workoutId: null })}
-                  />
+
                 </motion.div>
               </motion.div>
             )}

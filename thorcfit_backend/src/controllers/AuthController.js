@@ -78,7 +78,6 @@ class AuthController {
         data_nascimento,
         genero,
         telefone,
-        metodo_login: 'email'
       });
 
       // Criar perfil profissional se necessário
@@ -115,7 +114,7 @@ class AuthController {
       res.status(201).json({
         message: 'Usuário criado com sucesso',
         token,
-        usuario: {
+        user: {
           ...usuarioResposta,
           tipo_usuario
         }
@@ -144,12 +143,13 @@ class AuthController {
 
       // Buscar usuário por email
       const usuario = await Usuario.findOne({ 
-        where: { email, ativo: true },
-        include: [
-          { model: Nutricionista, as: 'nutricionista' },
-          { model: PersonalTrainer, as: 'personalTrainer' }
-        ]
-      });
+      where: { email },
+      include: [
+        { model: Nutricionista, as: 'nutricionista' },
+        { model: PersonalTrainer, as: 'personalTrainer' }
+      ]
+    });
+
 
       if (!usuario) {
         return res.status(401).json({
@@ -191,7 +191,7 @@ class AuthController {
       res.json({
         message: 'Login realizado com sucesso',
         token,
-        usuario: {
+        user: {
           ...usuarioResposta,
           tipo_usuario
         }
@@ -358,4 +358,3 @@ class AuthController {
 }
 
 module.exports = AuthController;
-

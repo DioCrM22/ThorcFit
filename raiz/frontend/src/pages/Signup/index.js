@@ -36,6 +36,7 @@ const Signup = () => {
   const [senha, setSenha] = useState("");
   const [senhaConf, setSenhaConf] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
 
   const [passwordValidations, setPasswordValidations] = useState({
     length: false,
@@ -170,6 +171,16 @@ const Signup = () => {
                 emoji="📧"
                 value={emailConf}
                 onChange={(e) => setEmailConf(e.target.value.toLowerCase())}
+              />
+            </InputGroup>
+
+            <InputGroup>
+              <label style={{ marginBottom: '4px', fontSize: '14px', color: '#555' }}>📅 Data de Nascimento:</label>
+              <Input
+                type="date"
+                value={dataNascimento}
+                onChange={(e) => setDataNascimento(e.target.value)}
+                style={{ padding: '8px', fontSize: '14px' }}
               />
             </InputGroup>
 

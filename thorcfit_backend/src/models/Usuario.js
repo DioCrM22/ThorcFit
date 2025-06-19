@@ -40,18 +40,12 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM("manutenção", "ganho", "perca"),
       allowNull: true,
     },
-    google_id: {
+
+    foto_perfil: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    avatar: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    metodo_login: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
+
   }, {
     tableName: "usuario",
     timestamps: false,

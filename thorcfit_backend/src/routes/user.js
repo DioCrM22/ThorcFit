@@ -7,6 +7,20 @@ const router = express.Router();
 // Todas as rotas requerem autenticação
 router.use(authMiddleware);
 
+// ✅ Rota que o frontend espera: GET /api/user/profile
+router.get('/profile', async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado na sessão' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Erro ao carregar o perfil:', error);
+    res.status(500).json({ error: 'Erro interno ao buscar perfil' });
+  }
+});
+
 // Atualizar perfil do usuário
 router.put('/usuario-perfil',
   UserController.validateUpdateProfile,
@@ -34,4 +48,3 @@ router.delete('/usuario/desativar',
 );
 
 module.exports = router;
-

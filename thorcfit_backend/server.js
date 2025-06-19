@@ -20,9 +20,6 @@ const vinculosRoutes = require('./src/routes/vinculos');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configurar trust proxy para proxies reversos
-app.set('trust proxy', true);
-
 // Configurações de segurança
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -41,9 +38,7 @@ app.use('/api/', limiter);
 
 // CORS
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000'
-  ],
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -167,3 +162,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
