@@ -93,7 +93,7 @@ export const InputGroup = styled.div`
 export const PasswordRules = styled.div`
   margin-top: 10px;
   font-size: 14px;
-  color: #666;
+  color: black;
 `;
 
 export const ValidationItem = styled.div`
@@ -158,14 +158,10 @@ export const RoleSelectionTitle = styled.h3`
 `;
 
 export const RoleOptionsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 15px;
-
-  @media (max-width: 430px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 export const RoleOption = styled.div`
