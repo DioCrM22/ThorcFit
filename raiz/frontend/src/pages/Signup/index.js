@@ -108,72 +108,74 @@ const Signup = () => {
   };
 
   const handleSignup = async () => {
-    if (!nome.trim() || nome.split(" ").length < 2) {
-      notify("👤 Informe seu nome completo.", "error");
-      return;
-    }
+  if (!nome.trim() || nome.split(" ").length < 2) {
+    notify("👤 Informe seu nome completo.", "error");
+    return;
+  }
 
-    if (!validateEmail(email)) {
-      notify("📧 E-mail inválido.", "error");
-      return;
-    }
+  if (!validateEmail(email)) {
+    notify("📧 E-mail inválido.", "error");
+    return;
+  }
 
-    if (email !== emailConf) {
-      notify("📧 E-mails não coincidem.", "error");
-      return;
-    }
+  if (email !== emailConf) {
+    notify("📧 E-mails não coincidem.", "error");
+    return;
+  }
 
-    if (!validatePassword(senha)) {
-      notify("🔒 A senha não atende aos critérios.", "error");
-      return;
-    }
+  if (!validatePassword(senha)) {
+    notify("🔒 A senha não atende aos critérios.", "error");
+    return;
+  }
 
-    if (senha !== senhaConf) {
-      notify("🔒 As senhas não coincidem.", "error");
-      return;
-    }
+  if (senha !== senhaConf) {
+    notify("🔒 As senhas não coincidem.", "error");
+    return;
+  }
 
-    if (!validarIdade(dataNascimento)) {
-      notify("⚠️ Você precisa ter pelo menos 14 anos.", "error");
-      return;
-    }
+  if (!validarIdade(dataNascimento)) {
+    notify("⚠️ Você precisa ter pelo menos 14 anos.", "error");
+    return;
+  }
 
-    if (selectedRole === "nutricionista" && !crn.trim()) {
-      notify("📄 Insira o CRN do nutricionista.", "error");
-      return;
-    }
+  if (selectedRole === "nutricionista" && !crn.trim()) {
+    notify("📄 Insira o CRN do nutricionista.", "error");
+    return;
+  }
 
-    if (selectedRole === "personal" && !cref.trim()) {
-      notify("📄 Insira o CREF do treinador.", "error");
-      return;
-    }
+  if (selectedRole === "personal" && !cref.trim()) {
+    notify("📄 Insira o CREF do treinador.", "error");
+    return;
+  }
 
-    try {
-      const extra = selectedRole === "nutricionista" ? crn : selectedRole === "personal" ? cref : "";
-      const errorMessage = await signup(nome, email, senha, selectedRole, dataNascimento, extra);
-      if (errorMessage) {
-        notify(errorMessage, "error");
-      } else {
-        notify("🎉 Cadastro realizado com sucesso!", "success");
-        navigate("/home");
-      }
-    } catch {
-      notify("❌ Erro ao conectar com o servidor", "error");
-    }
-  };
+  try {
+    const extra = selectedRole === "nutricionista" ? crn : selectedRole === "personal" ? cref : "";
 
-  const renderTooltipContent = () => {
-    switch (selectedRole) {
-      case "usuario":
-        return "👤 Usuário: Recebe treinos e planos nutricionais.";
-      case "nutricionista":
-        return "🍎 Nutricionista: Envia planos nutricionais (conta administrativa).";
-      case "personal":
-        return "💪 Personal: Envia treinos (conta administrativa).";
-      default:
-        return "";
+    const result = await signup(nome, email, senha, selectedRole, dataNascimento, extra);
+
+    if (result.success) {
+      notify("🎉 Cadastro realizado com sucesso!", "success");
+      navigate("/home");
+    } else {
+      notify(result.error || "❌ Erro ao realizar cadastro", "error");
     }
-  };
+  } catch {
+    notify("❌ Erro ao conectar com o servidor", "error");
+  }
+};
+
+const renderTooltipContent = () => {
+  switch (selectedRole) {
+    case "usuario":
+      return "👤 Usuário: Recebe treinos e planos nutricionais.";
+    case "nutricionista":
+      return "🍎 Nutricionista: Envia planos nutricionais (conta administrativa).";
+    case "personal":
+      return "💪 Personal: Envia treinos (conta administrativa).";
+    default:
+      return "";
+  }
+};
 
   return (
     <Container>

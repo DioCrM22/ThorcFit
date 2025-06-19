@@ -95,29 +95,44 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (nome, email, senha, role, data_nascimento) => {
-    setLoading(true);
-    try {
-      const { data } = await axios.post(`${API_BASE_URL}/api/auth/signup`, { 
-        nome,
-        email,
-        senha,
-        role,
-        data_nascimento
-      });
-      
-      if (data.error) throw new Error(data.error);
-      
-      handleAuthSuccess(data.token, data.user);
-      return { success: true };
-    } catch (error) {
-      setLoading(false);
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Erro ao cadastrar' 
-      };
+  const signup = async (nome, email, senha, role, data_nascimento, extra) => {
+  setLoading(true);
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
+      nome,
+      email,
+      senha,
+      role,
+      data_nascimento,
+      extra // Envia CRN ou CREF dependendo do tipo de conta
+    });
+
+    const { token, user } = response.data;
+
+    if (!token) {
+      throw new Error("Token não recebido do servidor.");
     }
-  };
+
+    // Armazena o token no localStorage
+    localStorage.setItem("token", token);
+
+    // Atualiza o contexto de autenticação
+    handleAuthSuccess(token, user);
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("Erro no signup:", error);
+    setLoading(false);
+
+    return {
+      success: false,
+      error: error.response?.data?.error || "❌ Erro ao cadastrar. Tente novamente."
+    };
+  }
+};
+
 
   const signin = async (email, senha) => {
     setLoading(true);
