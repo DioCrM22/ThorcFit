@@ -1,20 +1,19 @@
 const { sequelize } = require("../config/database");
 
-// Importar as funções de definição de modelo
+// Importar as definições dos modelos
 const defineUsuario = require("./Usuario");
 const defineProfissionais = require("./Profissionais");
 const defineNutricao = require("./Nutricao");
 const defineTreino = require("./Treino");
 const defineMetricasVinculos = require("./MetricasVinculos");
 
-// Definir os modelos passando a instância do Sequelize
+// Definir os modelos
 const Usuario = defineUsuario(sequelize);
 const { Nutricionista, PersonalTrainer } = defineProfissionais(sequelize);
 const { Alimento, PlanoNutricional, DiarioAlimentar, Refeicao, AlimentoRefeicao } = defineNutricao(sequelize);
 const { Exercicio, PlanoTreino, ExerciciosDoTreino, HistoricoTreino } = defineTreino(sequelize);
 const { MetasUsuario, MetricasUsuario, VinculoNutricional, VinculoTreino } = defineMetricasVinculos(sequelize);
 
-// Definir associações
 // Associações de Usuario
 Usuario.hasOne(Nutricionista, { foreignKey: 'id_usuario', as: 'nutricionista' });
 Nutricionista.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
@@ -69,15 +68,29 @@ AlimentoRefeicao.belongsTo(Refeicao, { foreignKey: 'id_refeicao', as: 'refeicao'
 Alimento.hasMany(AlimentoRefeicao, { foreignKey: 'id_alimento', as: 'refeicoesComAlimento' });
 AlimentoRefeicao.belongsTo(Alimento, { foreignKey: 'id_alimento', as: 'alimento' });
 
-// Associações de PlanoTreino
+// Associações de PlanoTreino e ExerciciosDoTreino (muitos para muitos via tabela intermediária)
+PlanoTreino.belongsToMany(Exercicio, {
+  through: ExerciciosDoTreino,
+  foreignKey: 'id_treino',
+  otherKey: 'id_exercicio',
+  as: 'exercicios',
+});
+
+Exercicio.belongsToMany(PlanoTreino, {
+  through: ExerciciosDoTreino,
+  foreignKey: 'id_exercicio',
+  otherKey: 'id_treino',
+  as: 'planosTreino',
+});
+
+// Opcional manter os relacionamentos diretos (1-N) entre PlanoTreino e ExerciciosDoTreino
 PlanoTreino.hasMany(ExerciciosDoTreino, { foreignKey: 'id_treino', as: 'exerciciosDoTreino' });
 ExerciciosDoTreino.belongsTo(PlanoTreino, { foreignKey: 'id_treino', as: 'planoTreino' });
 
-// Associações de Exercicio
 Exercicio.hasMany(ExerciciosDoTreino, { foreignKey: 'id_exercicio', as: 'treinosComExercicio' });
 ExerciciosDoTreino.belongsTo(Exercicio, { foreignKey: 'id_exercicio', as: 'exercicio' });
 
-// Exportar todos os modelos
+// Exportar modelos e sequelize
 module.exports = {
   sequelize,
   Usuario,

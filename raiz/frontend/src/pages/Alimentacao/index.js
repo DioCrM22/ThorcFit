@@ -72,7 +72,7 @@ const AlimentacaoPage = () => {
       
       const response = await fetch(`http://localhost:3001/api/alimentacao/diario/${dateString}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -148,7 +148,7 @@ const AlimentacaoPage = () => {
       await fetch('http://localhost:3001/api/alimentacao/agua', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -178,7 +178,7 @@ const AlimentacaoPage = () => {
       const response = await fetch('http://localhost:3001/api/alimentacao/refeicao', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -208,7 +208,7 @@ const AlimentacaoPage = () => {
         await fetch(`http://localhost:3001/api/alimentacao/refeicao/${food.id_alimento_refeicao}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
             'Content-Type': 'application/json'
           }
         });
@@ -226,7 +226,7 @@ const AlimentacaoPage = () => {
       await fetch('http://localhost:3001/api/user/meta-agua', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

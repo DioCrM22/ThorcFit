@@ -5,7 +5,6 @@ import { AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiClock, FiCheck, FiTrash2 } from 'react-icons/fi';
-
 import NavBar from '../../components/NavBar';
 import MeusTreinosButton from './MeusTreinosButton';
 import TreinadorSwitch from './TreinadorSwitch';
@@ -24,17 +23,15 @@ export default function VerTreino() {
   const [isCriarTreinoOpen, setIsCriarTreinoOpen] = useState(false);
 
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'http://localhost:3001/api';
 
   // Função para obter token do localStorage, validando existência e formato
   const getToken = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (!token || token === 'null' || token.trim() === '') {
       console.error('Token inválido ou não encontrado no localStorage:', token);
       return null;
     }
-    console.log('Token válido encontrado:', token);
-    return token;
   };
 
 const fetchTreinadores = useCallback(async () => {
@@ -46,12 +43,17 @@ const fetchTreinadores = useCallback(async () => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    const apenasTreinadores = data.filter(user => user.tipo === 'treinador');
+    console.log('Resposta profissionais:', data);
+
+    const profissionais = Array.isArray(data) ? data : [];
+
+    const apenasTreinadores = profissionais.filter(user => user.tipo === 'treinador');
     setTreinadores(apenasTreinadores);
   } catch (error) {
     console.error('Erro ao buscar treinadores:', error);
   }
 }, [API_URL]);
+
 
 // Efeito para carregar treinadores só uma vez
 useEffect(() => {
@@ -122,7 +124,7 @@ const handleDeleteTreino = async (id) => {
       const token = getToken();
       if (!token) return;
 
-      await axios.delete(`${API_URL}/treino/planos/${id}`, {
+      await axios.delete(`${API_URL}/treino/plano/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

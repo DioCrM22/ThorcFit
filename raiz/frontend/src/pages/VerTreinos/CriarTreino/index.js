@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../../../config/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiTrash2, FiArrowLeft, FiArrowRight, FiEdit2 } from 'react-icons/fi';
 import * as S from './styles';
@@ -37,12 +37,12 @@ const CriarTreino = ({ onClose }) => {
   const API_URL = 'http://localhost:3001/api';
 
   // Função para carregar exercícios do backend
-  const carregarExercicios = async () => {
+const carregarExercicios = async () => {
   setCarregandoExercicios(true);
   setErroCarregamento(null);
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken'); 
     if (!token) throw new Error('Usuário não autenticado');
 
     const response = await axios.get(`${API_URL}/exercicios`, {
@@ -59,6 +59,7 @@ const CriarTreino = ({ onClose }) => {
     setCarregandoExercicios(false);
   }
 };
+
 
 useEffect(() => {
   carregarExercicios();
@@ -162,7 +163,7 @@ useEffect(() => {
   // Salva o treino completo no backend
   const salvarTreino = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         alert('Usuário não autenticado. Faça login novamente.');
         return;
@@ -185,7 +186,7 @@ useEffect(() => {
         }))
       };
 
-      await axios.post(`${API_URL}/treinos/plano`, payload, {
+      await axios.post(`${API_URL}/treino/plano`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

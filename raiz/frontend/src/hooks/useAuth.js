@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:3001';
 const TOKEN_KEY = 'authToken'; // Chave única para o token
 
 export const AuthProvider = ({ children }) => {

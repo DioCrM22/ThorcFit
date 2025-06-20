@@ -1,6 +1,14 @@
 const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const { PlanoTreino, Exercicio, ExerciciosDoTreino, HistoricoTreino, PersonalTrainer, VinculoTreino } = require('../models');
+const { 
+  PlanoTreino, 
+  Exercicio, 
+  ExerciciosDoTreino, 
+  HistoricoTreino, 
+  PersonalTrainer, 
+  VinculoTreino,
+  Usuario
+} = require('../models');
 
 class TreinoController {
   // Validações para novo plano de treino
@@ -28,7 +36,6 @@ class TreinoController {
     try {
       const { status } = req.query;
 
-      // Query base - planos criados pelo usuário ou por personal vinculado
       let whereClause = {
         [Op.or]: [
           { id_criador_usuario: req.userId },
@@ -46,7 +53,6 @@ class TreinoController {
         ]
       };
 
-      // Aplicar filtro de status se fornecido
       if (status) {
         if (status === 'ativo') {
           whereClause.status = 'ativo';
@@ -60,7 +66,7 @@ class TreinoController {
         include: [
           {
             model: Exercicio,
-            as: 'exercicios',
+            as: 'exercicios', // alias correto aqui
             through: {
               attributes: ['series', 'repeticoes', 'carga', 'tempo_descanso', 'observacoes', 'ordem']
             }
@@ -69,7 +75,7 @@ class TreinoController {
             model: PersonalTrainer,
             as: 'criadorPersonal',
             include: [{
-              model: require('./Usuario'),
+              model: Usuario,
               as: 'usuario',
               attributes: ['nome']
             }]
@@ -78,10 +84,8 @@ class TreinoController {
         order: [['data_criacao', 'DESC']]
       });
 
-      // Calcular estatísticas
-      const estatisticas = await this.calcularEstatisticas(req.userId);
+      const estatisticas = await TreinoController.calcularEstatisticas(req.userId);
 
-      // Buscar exercícios disponíveis
       const exerciciosDisponiveis = await Exercicio.findAll({
         attributes: ['id_exercicio', 'nome', 'grupo_muscular'],
         order: [['grupo_muscular', 'ASC'], ['nome', 'ASC']]
@@ -110,9 +114,7 @@ class TreinoController {
 
     } catch (error) {
       console.error('Erro ao buscar planos de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
@@ -129,7 +131,6 @@ class TreinoController {
 
       const { nome, observacoes, exercicios, duracao_estimada } = req.body;
 
-      // Criar plano
       const novoPlano = await PlanoTreino.create({
         tipo_criador: 'usuario',
         id_criador_usuario: req.userId,
@@ -140,16 +141,12 @@ class TreinoController {
         duracao_estimada
       });
 
-      // Adicionar exercícios ao plano
       let exerciciosAdicionados = 0;
       for (let i = 0; i < exercicios.length; i++) {
         const exercicioData = exercicios[i];
-        
-        // Verificar se o exercício existe
+
         const exercicio = await Exercicio.findByPk(exercicioData.exercicio_id);
-        if (!exercicio) {
-          continue;
-        }
+        if (!exercicio) continue;
 
         await ExerciciosDoTreino.create({
           id_treino: novoPlano.id_plano_treino,
@@ -172,7 +169,6 @@ class TreinoController {
         });
       }
 
-      // Buscar plano criado com exercícios
       const planoCriado = await PlanoTreino.findByPk(novoPlano.id_plano_treino, {
         include: [{
           model: Exercicio,
@@ -191,13 +187,11 @@ class TreinoController {
 
     } catch (error) {
       console.error('Erro ao criar plano de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Visualizar plano de treino específico
+  // Visualizar plano específico
   static async getPlano(req, res) {
     try {
       const { id } = req.params;
@@ -215,7 +209,7 @@ class TreinoController {
             model: PersonalTrainer,
             as: 'criadorPersonal',
             include: [{
-              model: require('./Usuario'),
+              model: Usuario,
               as: 'usuario',
               attributes: ['nome']
             }]
@@ -224,17 +218,12 @@ class TreinoController {
       });
 
       if (!plano) {
-        return res.status(404).json({
-          error: 'Plano de treino não encontrado'
-        });
+        return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      // Verificar se o usuário tem acesso ao plano
       const temAcesso = await this.verificarAcessoPlano(plano, req.userId);
       if (!temAcesso) {
-        return res.status(403).json({
-          error: 'Acesso negado'
-        });
+        return res.status(403).json({ error: 'Acesso negado' });
       }
 
       res.json({
@@ -256,57 +245,43 @@ class TreinoController {
               instrucoes: exercicio.instrucoes,
               gif_url: exercicio.gif_url
             }
-          })).sort((a, b) => a.ordem - b.ordem)
+          })).sort((a,b) => a.ordem - b.ordem)
         }
       });
 
     } catch (error) {
       console.error('Erro ao buscar plano de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Editar plano de treino
+  // Atualizar plano de treino
   static async updatePlano(req, res) {
     try {
       const { id } = req.params;
       const { nome, observacoes, exercicios, duracao_estimada } = req.body;
 
       const plano = await PlanoTreino.findByPk(id);
-
       if (!plano) {
-        return res.status(404).json({
-          error: 'Plano de treino não encontrado'
-        });
+        return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      // Verificar se o usuário pode editar o plano
       if (plano.id_criador_usuario !== req.userId) {
-        return res.status(403).json({
-          error: 'Você não pode editar este plano'
-        });
+        return res.status(403).json({ error: 'Você não pode editar este plano' });
       }
 
-      // Atualizar dados básicos do plano
       await plano.update({
         nome: nome || plano.nome,
         descricao: observacoes !== undefined ? observacoes : plano.descricao,
         duracao_estimada: duracao_estimada || plano.duracao_estimada
       });
 
-      // Se exercícios foram fornecidos, atualizar a lista
       if (exercicios && Array.isArray(exercicios)) {
-        // Remover exercícios existentes
-        await ExerciciosDoTreino.destroy({
-          where: { id_treino: plano.id_plano_treino }
-        });
+        await ExerciciosDoTreino.destroy({ where: { id_treino: plano.id_plano_treino } });
 
-        // Adicionar novos exercícios
         for (let i = 0; i < exercicios.length; i++) {
           const exercicioData = exercicios[i];
-          
+
           await ExerciciosDoTreino.create({
             id_treino: plano.id_plano_treino,
             id_exercicio: exercicioData.exercicio_id,
@@ -320,7 +295,6 @@ class TreinoController {
         }
       }
 
-      // Buscar plano atualizado
       const planoAtualizado = await PlanoTreino.findByPk(id, {
         include: [{
           model: Exercicio,
@@ -339,13 +313,11 @@ class TreinoController {
 
     } catch (error) {
       console.error('Erro ao atualizar plano de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Duplicar plano de treino
+  // Duplicar plano
   static async duplicatePlano(req, res) {
     try {
       const { id } = req.params;
@@ -361,20 +333,14 @@ class TreinoController {
       });
 
       if (!planoOriginal) {
-        return res.status(404).json({
-          error: 'Plano de treino não encontrado'
-        });
+        return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      // Verificar acesso
       const temAcesso = await this.verificarAcessoPlano(planoOriginal, req.userId);
       if (!temAcesso) {
-        return res.status(403).json({
-          error: 'Acesso negado'
-        });
+        return res.status(403).json({ error: 'Acesso negado' });
       }
 
-      // Criar novo plano
       const novoPlano = await PlanoTreino.create({
         tipo_criador: 'usuario',
         id_criador_usuario: req.userId,
@@ -385,7 +351,6 @@ class TreinoController {
         duracao_estimada: planoOriginal.duracao_estimada
       });
 
-      // Copiar exercícios
       for (const exercicio of planoOriginal.exercicios) {
         await ExerciciosDoTreino.create({
           id_treino: novoPlano.id_plano_treino,
@@ -407,46 +372,36 @@ class TreinoController {
 
     } catch (error) {
       console.error('Erro ao duplicar plano de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Excluir plano de treino
+// Excluir plano
   static async deletePlano(req, res) {
+    const { id } = req.params;
+
     try {
-      const { id } = req.params;
-
-      const plano = await PlanoTreino.findByPk(id);
-
-      if (!plano) {
-        return res.status(404).json({
-          error: 'Plano de treino não encontrado'
-        });
-      }
-
-      // Verificar se o usuário pode excluir o plano
-      if (plano.id_criador_usuario !== req.userId) {
-        return res.status(403).json({
-          error: 'Você não pode excluir este plano'
-        });
-      }
-
-      await plano.destroy();
-
-      res.json({
-        success: true,
-        message: 'Plano excluído com sucesso'
+      // Primeiro apaga os exercícios vinculados a esse plano
+      await ExerciciosDoTreino.destroy({
+        where: { id_treino: id }
       });
 
+      // Depois apaga o plano
+      const deleted = await PlanoTreino.destroy({
+        where: { id_plano_treino: id }
+      });
+
+      if (deleted === 0) {
+        return res.status(404).json({ message: 'Plano não encontrado' });
+      }
+
+      return res.status(200).json({ message: 'Plano deletado com sucesso' });
     } catch (error) {
-      console.error('Erro ao excluir plano de treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      console.error('Erro ao deletar plano de treino:', error);
+      return res.status(500).json({ message: 'Erro ao deletar plano de treino' });
     }
   }
+
 
   // Iniciar treino
   static async iniciarTreino(req, res) {
@@ -464,20 +419,14 @@ class TreinoController {
       });
 
       if (!plano) {
-        return res.status(404).json({
-          error: 'Plano de treino não encontrado'
-        });
+        return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      // Verificar acesso
       const temAcesso = await this.verificarAcessoPlano(plano, req.userId);
       if (!temAcesso) {
-        return res.status(403).json({
-          error: 'Acesso negado'
-        });
+        return res.status(403).json({ error: 'Acesso negado' });
       }
 
-      // Criar registro no histórico
       const historicoTreino = await HistoricoTreino.create({
         id_usuario: req.userId,
         id_plano_treino: plano.id_plano_treino,
@@ -505,23 +454,21 @@ class TreinoController {
               instrucoes: exercicio.instrucoes,
               gif_url: exercicio.gif_url
             }
-          })).sort((a, b) => a.ordem - b.ordem)
+          })).sort((a,b) => a.ordem - b.ordem)
         },
         historico_id: historicoTreino.id_historico
       });
 
     } catch (error) {
       console.error('Erro ao iniciar treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
   // Finalizar treino
   static async finalizarTreino(req, res) {
     try {
-      const { historico_id, calorias_queimadas, observacoes } = req.body;
+      const { historico_id, observacoes } = req.body;
 
       const historico = await HistoricoTreino.findOne({
         where: {
@@ -531,48 +478,40 @@ class TreinoController {
       });
 
       if (!historico) {
-        return res.status(404).json({
-          error: 'Histórico de treino não encontrado'
-        });
+        return res.status(404).json({ error: 'Histórico de treino não encontrado' });
       }
 
       const horaFim = new Date().toTimeString().split(' ')[0];
       const horaInicio = historico.hora_inicio;
-      
-      // Calcular duração em minutos
+
       const [horaI, minI] = horaInicio.split(':').map(Number);
       const [horaF, minF] = horaFim.split(':').map(Number);
-      const duracaoMinutos = (horaF * 60 + minF) - (horaI * 60 + minI);
+      let duracao = (horaF * 60 + minF) - (horaI * 60 + minI);
+      if (duracao < 0) duracao += 24 * 60;
 
       await historico.update({
+        concluido: true,
         hora_fim: horaFim,
-        duracao_minutos: duracaoMinutos,
-        calorias_queimadas,
-        observacoes,
-        concluido: true
+        duracao,
+        observacoes
       });
 
       res.json({
         success: true,
-        message: 'Treino finalizado com sucesso',
-        duracao_minutos: duracaoMinutos
+        message: 'Treino finalizado com sucesso'
       });
 
     } catch (error) {
       console.error('Erro ao finalizar treino:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  // Métodos auxiliares
+  // Verificar acesso ao plano
   static async verificarAcessoPlano(plano, userId) {
-    if (plano.id_criador_usuario === userId) {
-      return true;
-    }
+    if (plano.id_criador_usuario === userId) return true;
 
-    if (plano.tipo_criador === 'personal') {
+    if (plano.id_criador_personal) {
       const vinculo = await VinculoTreino.findOne({
         where: {
           id_usuario: userId,
@@ -580,73 +519,51 @@ class TreinoController {
           status: 'ativo'
         }
       });
-      return vinculo !== null;
+      return !!vinculo;
     }
-
     return false;
   }
 
+  // Calcular estatísticas do usuário
   static async calcularEstatisticas(userId) {
-    const hoje = new Date();
-    const inicioSemana = new Date(hoje.setDate(hoje.getDate() - hoje.getDay()));
-    
-    const [
-      treinosSemana,
-      totalTreinos,
-      totalCalorias,
-      tempoTotal
-    ] = await Promise.all([
-      HistoricoTreino.count({
-        where: {
-          id_usuario: userId,
-          data_treino: { [Op.gte]: inicioSemana.toISOString().split('T')[0] },
-          concluido: true
-        }
-      }),
-      HistoricoTreino.count({
-        where: { id_usuario: userId, concluido: true }
-      }),
-      HistoricoTreino.sum('calorias_queimadas', {
-        where: { id_usuario: userId, concluido: true }
-      }),
-      HistoricoTreino.sum('duracao_minutos', {
-        where: { id_usuario: userId, concluido: true }
-      })
-    ]);
+    const totalPlanos = await PlanoTreino.count({
+      where: {
+        [Op.or]: [
+          { id_criador_usuario: userId },
+          {
+            id_criador_personal: {
+              [Op.in]: await VinculoTreino.findAll({
+                where: { id_usuario: userId, status: 'ativo' },
+                attributes: ['id_personal']
+              }).then(vinculos => vinculos.map(v => v.id_personal))
+            }
+          }
+        ]
+      }
+    });
 
-    // Exercício favorito
-    const exercicioFavorito = await ExerciciosDoTreino.findOne({
-      include: [
-        {
-          model: Exercicio,
-          as: 'exercicio',
-          attributes: ['nome']
-        },
-        {
-          model: PlanoTreino,
-          as: 'planoTreino',
-          include: [{
-            model: HistoricoTreino,
-            as: 'historicos',
-            where: { id_usuario: userId, concluido: true },
-            attributes: []
-          }]
-        }
-      ],
-      group: ['id_exercicio'],
-      order: [[require('sequelize').fn('COUNT', require('sequelize').col('planoTreino.historicos.id_historico')), 'DESC']],
-      limit: 1
+    const planosAtivos = await PlanoTreino.count({
+      where: {
+        status: 'ativo',
+        [Op.or]: [
+          { id_criador_usuario: userId },
+          {
+            id_criador_personal: {
+              [Op.in]: await VinculoTreino.findAll({
+                where: { id_usuario: userId, status: 'ativo' },
+                attributes: ['id_personal']
+              }).then(vinculos => vinculos.map(v => v.id_personal))
+            }
+          }
+        ]
+      }
     });
 
     return {
-      treinos_semana: treinosSemana,
-      total_treinos_realizados: totalTreinos,
-      calorias_queimadas: totalCalorias || 0,
-      tempo_total_treino: Math.round((tempoTotal || 0) / 60 * 10) / 10, // em horas
-      exercicio_favorito: exercicioFavorito?.exercicio?.nome || 'N/A'
+      total_planos: totalPlanos,
+      planos_ativos: planosAtivos
     };
   }
 }
 
 module.exports = TreinoController;
-
