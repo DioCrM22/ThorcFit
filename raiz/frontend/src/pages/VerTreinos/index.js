@@ -1,88 +1,137 @@
-// src/pages/VerTreino/index.js
+// src/pages/VerTreinos/index.js
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FiPlus, FiClock, FiUser, FiCheck, FiMail, FiPhone, FiTrash2 } from 'react-icons/fi';
-import NavBar from '../../components/NavBar';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import * as S from './styles';
-import TreinadorSwitch from './TreinadorSwitch';
+import { FiPlus, FiClock, FiCheck, FiTrash2 } from 'react-icons/fi';
+
+import NavBar from '../../components/NavBar';
 import MeusTreinosButton from './MeusTreinosButton';
+import TreinadorSwitch from './TreinadorSwitch';
+import CriarTreino from './CriarTreino';
 
-const mockTreinosPessoais = [
-  {
-    id: 1,
-    nome: "Treino Hipertrofia",
-    objetivo: "Ganho de massa muscular",
-    observacoes: "Executar com atenção à postura",
-    data: new Date().toISOString(),
-    status: "pendente",
-    tipo: "pessoal",
-    exercicios: [
-      "Supino reto",
-      "Agachamento livre",
-      "Remada curvada"
-    ]
-  }
-];
-
-const mockTreinadores = [
-  {
-    id: 1,
-    nome: "Carlos Silva",
-    email: "carlos@example.com",
-    telefone: "(11) 99999-9999",
-    foto: "../carlos.jpg",
-    especialidade: "Musculação",
-    treinos: [
-      {
-        id: 101,
-        nome: "Treino Funcional",
-        objetivo: "Resistência e agilidade",
-        observacoes: "Manter ritmo alto",
-        data: new Date().toISOString(),
-        status: "pendente",
-        tipo: "treinador",
-        criador: "Carlos Silva",
-        exercicios: [
-          "Burpee",
-          "Kettlebell Swing",
-          "Pular Corda"
-        ]
-      }
-    ]
-  }
-];
+import * as S from './styles';
 
 export default function VerTreino() {
   const navigate = useNavigate();
+
+  const [treinos, setTreinos] = useState([]);
+  const [treinadores, setTreinadores] = useState([]);
   const [activeTab, setActiveTab] = useState('pendentes');
   const [viewMode, setViewMode] = useState('pessoal');
-  const [treinadorAtual, setTreinadorAtual] = useState(null);
+  const [treinadorSelecionado, setTreinadorSelecionado] = useState(null);
+  const [isCriarTreinoOpen, setIsCriarTreinoOpen] = useState(false);
 
-  const formatarData = (dataString) => {
-    const data = new Date(dataString);
-    return `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1)
-      .toString().padStart(2, '0')}`;
+
+  const API_URL = 'http://localhost:5000/api';
+
+  // Função para obter token do localStorage, validando existência e formato
+  const getToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token || token === 'null' || token.trim() === '') {
+      console.error('Token inválido ou não encontrado no localStorage:', token);
+      return null;
+    }
+    console.log('Token válido encontrado:', token);
+    return token;
   };
 
-  const treinosFiltrados = useMemo(() => {
-    const treinosBase = viewMode === 'pessoal'
-      ? mockTreinosPessoais
-      : treinadorAtual?.treinos || [];
+const fetchTreinadores = useCallback(async () => {
+  try {
+    const token = getToken();
+    if (!token) return;
 
-    return treinosBase.filter((treino) => {
-      const statusMatch =
-        (activeTab === 'pendentes' && (treino.status === 'pendente' || treino.status === 'em-andamento')) ||
-        (activeTab === 'realizados' && treino.status === 'finalizado');
-
-      return statusMatch;
+    const { data } = await axios.get(`${API_URL}/user/profissionais`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-  }, [viewMode, activeTab, treinadorAtual]);
 
-  const handleAcaoTreino = (id) => {
-    navigate(`/treino/${id}`);
-  };
+    const apenasTreinadores = data.filter(user => user.tipo === 'treinador');
+    setTreinadores(apenasTreinadores);
+  } catch (error) {
+    console.error('Erro ao buscar treinadores:', error);
+  }
+}, [API_URL]);
+
+// Efeito para carregar treinadores só uma vez
+useEffect(() => {
+  fetchTreinadores();
+}, [fetchTreinadores]);
+
+// Busca treinos (planos), filtra se estiver na visão de treinador
+const fetchTreinos = useCallback(async () => {
+  try {
+    const token = getToken();
+    if (!token) return;
+
+    const { data } = await axios.get(`${API_URL}/treino/planos`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    let planos = data.planos_treino || data;
+
+    if (viewMode === 'treinador' && treinadorSelecionado?.id) {
+      planos = planos.filter(
+        treino => treino.id_treinador === treinadorSelecionado.id
+      );
+    }
+
+    setTreinos(planos);
+  } catch (error) {
+    console.error('Erro ao buscar treinos:', error);
+  }
+}, [viewMode, treinadorSelecionado, API_URL]);
+
+// Efeito para carregar treinos ao montar componente ou mudar dependências
+useEffect(() => {
+  fetchTreinos();
+}, [fetchTreinos]);
+
+// Alterna modo de visualização
+const toggleViewMode = () => {
+  setViewMode(prev => (prev === 'pessoal' ? 'treinador' : 'pessoal'));
+};
+
+// Formata data no padrão dd/mm/aaaa
+const formatarData = (dataString) => {
+  const data = new Date(dataString);
+  return `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}/${data.getFullYear()}`;
+};
+
+// Filtra treinos baseado no status (pendentes ou realizados)
+const treinosFiltrados = useMemo(() => {
+  return treinos.filter((treino) => {
+    const statusMatch =
+      (activeTab === 'pendentes' && (treino.status === 'ativo' || treino.status === 'em-andamento')) ||
+      (activeTab === 'realizados' && treino.status === 'finalizado');
+    return statusMatch;
+  });
+}, [treinos, activeTab]);
+
+// Navega para detalhes do treino
+const handleAcaoTreino = (id) => {
+  navigate(`/treino/${id}`);
+};
+
+// Deleta treino após confirmação
+const handleDeleteTreino = async (id) => {
+  if (window.confirm('Deseja realmente deletar este treino?')) {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      await axios.delete(`${API_URL}/treino/planos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      fetchTreinos();
+    } catch (error) {
+      console.error('Erro ao deletar treino:', error);
+    }
+  }
+};
 
   return (
     <S.Page>
@@ -93,60 +142,44 @@ export default function VerTreino() {
       />
 
       <S.CenteredLogo>
-        <img src="/assets/images/LogoForte.png" alt="Logo" />
+        <img src="/assets/images/LogoForte.png" alt="Logo ThorcFit" />
         <S.ViewModeTitle>
-          {viewMode === 'pessoal' ? 'MEUS TREINOS 👤' : treinadorAtual?.nome}
+          {viewMode === 'pessoal' ? 'MEUS TREINOS 👤' : 
+           `TREINOS DO ${treinadorSelecionado?.nome?.toUpperCase() || 'TREINADOR'}`}
         </S.ViewModeTitle>
       </S.CenteredLogo>
 
-      <MeusTreinosButton
-        onClick={() => {
-          setViewMode('pessoal');
-          setTreinadorAtual(null);
-        }}
+      <MeusTreinosButton 
+        onClick={toggleViewMode}
         active={viewMode === 'pessoal'}
-        whileHover={{ scale: 1.1 }}
       />
 
-      <TreinadorSwitch
-        treinadores={mockTreinadores}
-        onSelectTreinador={(t) => {
-          setTreinadorAtual(t);
-          setViewMode('treinador');
-        }}
-        currentTreinador={treinadorAtual}
-      />
+      {viewMode === 'treinador' && (
+        <TreinadorSwitch 
+          treinadores={treinadores}
+          onSelectTreinador={setTreinadorSelecionado}
+          currentTreinador={treinadorSelecionado}
+        />
+      )}
+
+      <S.FloatingButton
+        whileHover={{ scale: 1.1 }}
+        onClick={() => setIsCriarTreinoOpen(true)}
+      >
+        <FiPlus size={28} />
+      </S.FloatingButton>
 
       <S.Content>
-        {viewMode === 'treinador' && treinadorAtual && (
-          <S.ProfileHeader>
-            <S.ProfileImageContainer>
-              <S.ProfileImage src={treinadorAtual.foto} />
-            </S.ProfileImageContainer>
-            <S.ProfileInfo>
-              <S.ProfileName>{treinadorAtual.nome}</S.ProfileName>
-              <S.ProfileDetail><FiMail size={14} /> {treinadorAtual.email}</S.ProfileDetail>
-              <S.ProfileDetail><FiPhone size={14} /> {treinadorAtual.telefone}</S.ProfileDetail>
-              <S.ProfileType>TREINADOR</S.ProfileType>
-            </S.ProfileInfo>
-            <S.RemoveButton onClick={() => {
-              setTreinadorAtual(null);
-              setViewMode('pessoal');
-            }}>
-              <FiTrash2 />
-            </S.RemoveButton>
-          </S.ProfileHeader>
-        )}
-
         <S.TabsContainer>
-          <S.TabButton
-            active={activeTab === 'pendentes'}
+          <S.TabButton 
+            $active={activeTab === 'pendentes'}
             onClick={() => setActiveTab('pendentes')}
           >
             Pendentes
           </S.TabButton>
+
           <S.TabButton
-            active={activeTab === 'realizados'}
+            $active={activeTab === 'realizados'}
             onClick={() => setActiveTab('realizados')}
           >
             Realizados
@@ -160,50 +193,55 @@ export default function VerTreino() {
             ) : (
               treinosFiltrados.map((treino) => (
                 <S.TreinoCard
-                  key={treino.id}
+                  key={treino.id_plano_treino}
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                 >
                   <S.TreinoHeader>
-                    <S.TreinoDate>{formatarData(treino.data)}</S.TreinoDate>
-                    <S.TreinoType tipo={treino.tipo}>
-                      {treino.tipo === 'pessoal' ? 'PESSOAL' : 'TREINADOR'}
+                    <S.TreinoDate>{formatarData(treino.data_criacao)}</S.TreinoDate>
+                    <S.TreinoType tipo={treino.tipo || 'pessoal'}>
+                      {treino.tipo?.toUpperCase() || 'PESSOAL'}
                     </S.TreinoType>
                   </S.TreinoHeader>
 
                   <S.TreinoName>{treino.nome}</S.TreinoName>
 
-                  {treino.objetivo && (
-                    <S.TreinoDetail>🎯 {treino.objetivo}</S.TreinoDetail>
+                  {treino.descricao && (
+                    <S.TreinoDetail>📝 {treino.descricao}</S.TreinoDetail>
                   )}
 
-                  {treino.observacoes && (
-                    <S.TreinoDetail>📝 {treino.observacoes}</S.TreinoDetail>
-                  )}
-
-                  <S.TreinoDetail>💪 {treino.exercicios?.length} exercício(s)</S.TreinoDetail>
-
-                  {treino.tipo === 'treinador' && (
-                    <S.TreinoDetail><FiUser size={14} /> {treino.criador}</S.TreinoDetail>
-                  )}
+                  <S.TreinoDetail>💪 {treino.exercicios_treino?.length || 0} exercício(s)</S.TreinoDetail>
 
                   <S.TreinoAction
                     status={treino.status}
-                    onClick={() => handleAcaoTreino(treino.id)}
+                    onClick={() => handleAcaoTreino(treino.id_plano_treino)}
                     whileHover={{ scale: 1.05 }}
                   >
-                    {treino.status === 'pendente' && <><FiPlus size={14} /> Iniciar</>}
+                    {treino.status === 'ativo' && <><FiPlus size={14} /> Iniciar</>}
                     {treino.status === 'em-andamento' && <><FiClock size={14} /> Continuar</>}
                     {treino.status === 'finalizado' && <><FiCheck size={14} /> Visualizar</>}
                   </S.TreinoAction>
+
+                  <S.RemoveButton onClick={() => handleDeleteTreino(treino.id_plano_treino)}>
+                    <FiTrash2 />
+                  </S.RemoveButton>
                 </S.TreinoCard>
               ))
             )}
           </S.TreinosGrid>
         </AnimatePresence>
       </S.Content>
+
+      {isCriarTreinoOpen && (
+        <CriarTreino
+          onClose={() => setIsCriarTreinoOpen(false)}
+          fetchTreinos={fetchTreinos}
+          viewMode={viewMode}
+          treinadorSelecionado={treinadorSelecionado}
+        />
+      )}
     </S.Page>
   );
 }

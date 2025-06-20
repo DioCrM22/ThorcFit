@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
+const API_BASE_URL = 'http://localhost:5000';
+const TOKEN_KEY = 'authToken'; // Chave única para o token
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -11,20 +13,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // URL base do backend
-  const API_BASE_URL = 'http://localhost:3001';
-
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     navigate('/signin', { replace: true });
   }, [navigate]);
 
   const handleAuthSuccess = useCallback((token, userData) => {
-    console.log('Salvando token:', token);
-    localStorage.setItem('token', token);
-    localStorage.setItem('authToken', token);
+    localStorage.setItem(TOKEN_KEY, token);
     setUser(userData);
     setLoading(false);
     navigate('/home', { replace: true });
@@ -32,9 +28,11 @@ export const AuthProvider = ({ children }) => {
 
   const checkSession = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      console.log('Token enviado no header:', token);
-      if (!token) return null;
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        setInitializing(false);
+        return null;
+      }
 
       const { data } = await axios.get(`${API_BASE_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -54,10 +52,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      console.log('Token enviado no header (fetchUserProfile):', token);
+      const token = localStorage.getItem(TOKEN_KEY);
       const { data } = await axios.get(`${API_BASE_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -68,133 +65,90 @@ export const AuthProvider = ({ children }) => {
       logout();
       return null;
     }
-  };
+  }, [logout]);
 
-  const updateProfile = async (updatedData) => {
+  const updateProfile = useCallback(async (updatedData) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-
+      const token = localStorage.getItem(TOKEN_KEY);
       const { data } = await axios.put(`${API_BASE_URL}/api/user/profile`, updatedData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (data) {
-        setUser(data);
-        return null;
-      } else {
-        return 'Erro ao atualizar perfil';
-      }
+      setUser(data);
+      return null;
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       return error.response?.data?.error || 'Erro ao atualizar perfil';
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const signup = async (nome, email, senha, role, data_nascimento, extra) => {
-  setLoading(true);
-
-  try {
-    const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
-      nome,
-      email,
-      senha,
-      role,
-      data_nascimento,
-      extra // Envia CRN ou CREF dependendo do tipo de conta
-    });
-
-    const { token, user } = response.data;
-
-    if (!token) {
-      throw new Error("Token não recebido do servidor.");
-    }
-
-    // Armazena o token no localStorage
-    localStorage.setItem("token", token);
-
-    // Atualiza o contexto de autenticação
-    handleAuthSuccess(token, user);
-
-    return { success: true };
-
-  } catch (error) {
-    console.error("Erro no signup:", error);
-    setLoading(false);
-
-    return {
-      success: false,
-      error: error.response?.data?.error || "❌ Erro ao cadastrar. Tente novamente."
-    };
-  }
-};
-
-
-  const signin = async (email, senha) => {
+  const signup = useCallback(async (nome, email, senha, role, data_nascimento, extra) => {
     setLoading(true);
     try {
-      console.log('Tentando fazer login com:', { email, url: `${API_BASE_URL}/api/auth/login` });
-      
-      const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        email,
-        senha
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
+        nome, email, senha, role, data_nascimento, extra
       });
-  
-      console.log('Resposta do servidor:', data);
-  
-      if (!data.token || !data.user) {
-        throw new Error('Resposta inválida do servidor');
-      }
-  
-      handleAuthSuccess(data.token, data.user);
+
+      const { token, user } = response.data;
+      if (!token) throw new Error("Token não recebido");
+      
+      handleAuthSuccess(token, user);
       return { success: true };
     } catch (error) {
-      console.error('Erro detalhado no login:', error);
-      console.error('Status:', error.response?.status);
-      console.error('Data:', error.response?.data);
-      
-      return { 
+      console.error("Erro no signup:", error);
+      return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Erro ao fazer login' 
+        error: error.response?.data?.error || "Erro ao cadastrar"
       };
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleAuthSuccess]);
 
-  const forgotPassword = async (email) => {
+  const signin = useCallback(async (email, senha) => {
     setLoading(true);
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { 
-        email 
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email, senha
       });
-      
-      if (data.error) {
-        return data.error;
+
+      if (!data.token || !data.user) {
+        throw new Error('Resposta inválida do servidor');
       }
-      return null;
+
+      handleAuthSuccess(data.token, data.user);
+      return { success: true };
+    } catch (error) {
+      console.error('Erro no login:', error);
+      return { 
+        success: false,
+        error: error.response?.data?.error || 'Erro ao fazer login' 
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, [handleAuthSuccess]);
+
+  const forgotPassword = useCallback(async (email) => {
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
+      return data.error || null;
     } catch (error) {
       console.error('Erro ao solicitar recuperação de senha:', error);
       return error.response?.data?.error || 'Erro ao solicitar recuperação de senha';
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const resetPassword = async (email, newPassword) => {
+  const resetPassword = useCallback(async (email, newPassword) => {
     setLoading(true);
     try {
       const { data } = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
-        email,
-        newPassword
+        email, newPassword
       });
       return data.error || null;
     } catch (error) {
@@ -203,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkSession();
