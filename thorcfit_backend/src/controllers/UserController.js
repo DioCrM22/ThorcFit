@@ -7,7 +7,10 @@ class UserController {
     body('nome').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
     body('telefone').optional().trim().isLength({ max: 20 }).withMessage('Telefone deve ter no máximo 20 caracteres'),
     body('genero').optional().isIn(['masculino', 'feminino', 'outro']).withMessage('Gênero inválido'),
-    body('data_nascimento').optional().isISO8601().withMessage('Data de nascimento inválida')
+    body('data_nascimento').optional().isISO8601().withMessage('Data de nascimento inválida'),
+    body('id_objetivo').optional().isIn(['manutenção', 'ganho', 'perca']).withMessage('Objetivo inválido'),
+    body('altura').optional().isFloat({ min: 50, max: 300 }).withMessage('Altura deve ser entre 50 e 300 cm'),
+    body('peso').optional().isFloat({ min: 20, max: 500 }).withMessage('Peso deve ser entre 20 e 500 kg')
   ];
 
   static async updateProfile(req, res) {
@@ -17,7 +20,21 @@ class UserController {
         return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
       }
 
-      const { nome, telefone, genero, data_nascimento, foto_perfil, bio, especialidades, registro_profissional, preco_consulta, preco_sessao } = req.body;
+      const {
+        nome,
+        telefone,
+        genero,
+        data_nascimento,
+        foto_perfil,
+        id_objetivo,
+        altura,
+        peso,
+        bio,
+        especialidades,
+        registro_profissional,
+        preco_consulta,
+        preco_sessao
+      } = req.body;
 
       const usuario = await Usuario.findByPk(req.userId, {
         include: [
@@ -36,6 +53,9 @@ class UserController {
       if (genero !== undefined) dadosAtualizacao.genero = genero;
       if (data_nascimento !== undefined) dadosAtualizacao.data_nascimento = data_nascimento;
       if (foto_perfil !== undefined) dadosAtualizacao.foto_perfil = foto_perfil;
+      if (id_objetivo !== undefined) dadosAtualizacao.id_objetivo = id_objetivo;
+      if (altura !== undefined) dadosAtualizacao.altura = altura;
+      if (peso !== undefined) dadosAtualizacao.peso = peso;
 
       await usuario.update(dadosAtualizacao);
 
@@ -83,7 +103,7 @@ class UserController {
       const { id } = req.params;
 
       const usuario = await Usuario.findByPk(id, {
-        attributes: ['id_usuario', 'nome', 'foto_perfil'],
+        attributes: ['id_usuario', 'nome', 'foto_perfil', 'altura', 'peso', 'id_objetivo'],
         include: [
           {
             model: Nutricionista,
@@ -143,7 +163,7 @@ class UserController {
       const { count, rows: profissionais } = await Usuario.findAndCountAll({
         where: whereClause,
         include,
-        attributes: ['id_usuario', 'nome', 'foto_perfil'],
+        attributes: ['id_usuario', 'nome', 'foto_perfil', 'altura', 'peso', 'id_objetivo'],
         limit: parseInt(limite),
         offset,
         order: [['nome', 'ASC']]
@@ -175,26 +195,42 @@ class UserController {
     }
   }
 
+  static async getProfile(req, res) {
+    try {
+      const usuario = await Usuario.findByPk(req.userId, {
+        attributes: { exclude: ['senha_hash'] },
+        include: [
+          { model: Nutricionista, as: 'nutricionista' },
+          { model: PersonalTrainer, as: 'personalTrainer' }
+        ]
+      });
+
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      res.json({ usuario: usuario.toJSON() });
+
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
+
   static async getUserStats(req, res) {
     try {
-      const { DiarioAlimentar, PlanoTreino, MetricasUsuario } = require('../models');
+      const { DiarioAlimentar, PlanoTreino } = require('../models');
 
-      const [totalDiarios, totalPlanos, totalMetricas, ultimaMetrica] = await Promise.all([
+      const [totalDiarios, totalPlanos] = await Promise.all([
         DiarioAlimentar.count({ where: { id_usuario: req.userId } }),
         PlanoTreino.count({ where: { id_criador_usuario: req.userId } }),
-        MetricasUsuario.count({ where: { id_usuario: req.userId } }),
-        MetricasUsuario.findOne({
-          where: { id_usuario: req.userId },
-          order: [['data_registro', 'DESC']]
-        })
       ]);
 
       res.json({
         estatisticas: {
           total_diarios_alimentares: totalDiarios,
           total_planos_treino: totalPlanos,
-          total_metricas: totalMetricas,
-          ultima_metrica: ultimaMetrica
+          // Removi métricas pois você está excluindo
         }
       });
 

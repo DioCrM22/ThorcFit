@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import InputMask from 'react-input-mask';
+import { IMaskInput } from 'react-imask';
+import styled from 'styled-components';
 import axios from 'axios';
 import InputWithOptions from '../../components/InputWithOptions';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,6 +35,16 @@ const AZUL = '#3a86ff';
 const LARANJA = '#FF6B35';
 const VERDE = '#229a00';
 
+// Styled para o IMaskInput baseado no seu Input
+const MaskedInput = styled(IMaskInput)`
+  border: 1px solid ${({ bordercolor }) => bordercolor || '#ccc'};
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+`;
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState({
@@ -133,72 +144,80 @@ const ProfilePage = () => {
     return !error;
   };
 
-  const handleSave = async () => {
-    const hasErrors = Object.keys(errors).some(key => errors[key]);
-    if (hasErrors) return toast.error('Corrija os campos inválidos');
-  
-    try {
-      const formDataToSend = new FormData();
-      
-      // Mapear campos do frontend para o backend
-      const changes = {
-        nome_completo: formData.nome,
-        telefone: formData.telefone,
-        data_nascimento: formData.dataNascimento,
-        genero: formData.genero,
-        altura_cm: Number(formData.altura),
-        peso_kg: Number(formData.peso),
-        objetivo: formData.objetivo
-      };
-  
-      // Adicionar apenas campos alterados
-      Object.keys(changes).forEach(key => {
-        if (changes[key] !== userData[key] && changes[key] !== undefined) {
-          formDataToSend.append(key, changes[key]);
-        }
-      });
-  
-      // Tratar a imagem separadamente
-      if (formData.foto_perfil && formData.foto_perfil !== userData.foto_perfil) {
-        if (formData.foto_perfil.startsWith('data:image')) {
-          // Converter base64 para blob
-          const blob = await fetch(formData.foto_perfil).then(r => r.blob());
-          formDataToSend.append('foto_perfil', blob);
-        }
+const handleSave = async () => {
+  const hasErrors = Object.keys(errors).some(key => errors[key]);
+  if (hasErrors) return toast.error('Corrija os campos inválidos');
+
+  try {
+    const formDataToSend = new FormData();
+
+    const objetivoMap = {
+      'Manutenção': 'manutenção',
+      'Ganho de massa muscular': 'ganho',
+      'Perca de massa muscular': 'perca'
+    };
+
+    const objetivoBanco = objetivoMap[formData.objetivo] || null;
+
+    // Mapear campos do frontend para o backend
+    const changes = {
+      nome: formData.nome,
+      telefone: formData.telefone,
+      data_nascimento: formData.dataNascimento,
+      genero: formData.genero,
+      altura_cm: Number(formData.altura),
+      peso_kg: Number(formData.peso),
+      id_objetivo: objetivoBanco 
+    };
+
+    // Adicionar apenas os campos que foram alterados
+    Object.keys(changes).forEach(key => {
+      if (changes[key] !== userData[key] && changes[key] !== undefined) {
+        formDataToSend.append(key, changes[key]);
       }
-  
-      if (formDataToSend.entries().next().done) {
-        toast.info('Nenhuma alteração detectada');
-        return;
+    });
+
+    // Tratar a imagem separadamente
+    if (formData.foto_perfil && formData.foto_perfil !== userData.foto_perfil) {
+      if (formData.foto_perfil.startsWith('data:image')) {
+        const blob = await fetch(formData.foto_perfil).then(r => r.blob());
+        formDataToSend.append('foto_perfil', blob);
       }
-  
-      const token = localStorage.getItem('authToken');
-      const response = await axios.put('http://localhost:5000/atualizar-perfil', formDataToSend, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-  
-      // Atualizar estado com os novos dados
-      const updatedUser = {
-        ...userData,
-        ...response.data.usuarioAtualizado,
-        dataNascimento: response.data.usuarioAtualizado.data_nascimento,
-        altura: response.data.usuarioAtualizado.altura_cm,
-        peso: response.data.usuarioAtualizado.peso_kg
-      };
-      
-      updateProfile(updatedUser);
-      setUserData(updatedUser);
-      setFormData(updatedUser);
-      setIsEditing(false);
-      toast.success('Perfil atualizado!');
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      toast.error(error.response?.data?.error || 'Erro ao salvar');
     }
-  };
+
+    if (formDataToSend.entries().next().done) {
+      toast.info('Nenhuma alteração detectada');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    const response = await axios.put('http://localhost:3001/api/user/usuario-perfil', formDataToSend, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    // Atualizar estado com os novos dados
+    const updatedUser = {
+      ...userData,
+      ...response.data.usuarioAtualizado,
+      dataNascimento: response.data.usuarioAtualizado.data_nascimento,
+      altura: response.data.usuarioAtualizado.altura_cm,
+      peso: response.data.usuarioAtualizado.peso_kg,
+      objetivo: response.data.usuarioAtualizado.id_objetivo // <<< Atualizando local
+    };
+
+    updateProfile(updatedUser);
+    setUserData(updatedUser);
+    setFormData(updatedUser);
+    setIsEditing(false);
+    toast.success('Perfil atualizado!');
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    toast.error(error.response?.data?.error || 'Erro ao salvar');
+  }
+};
 
   const handleImageUpload = (e) => {
     if (e.target.files?.[0]) {
@@ -269,7 +288,7 @@ const ProfilePage = () => {
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-      <InputGroup>
+        <InputGroup>
           <Label>👤 Nome Completo</Label>
           {isEditing ? (
             <>
@@ -286,24 +305,21 @@ const ProfilePage = () => {
             <ViewModeField>{userData.nome || 'Não informado'}</ViewModeField>
           )}
         </InputGroup>
+
         <InputGroup>
           <Label>📱 Telefone</Label>
           {isEditing ? (
-            <InputMask
-              mask="+99 (99) 99999-9999"
+            <MaskedInput
+              mask="+00 (00) 00000-0000"
               value={formData.telefone}
-              onChange={handleInputChange}
-            >
-              {(inputProps) => (
-                <Input
-                  {...inputProps}
-                  name="telefone"
-                  bordercolor={AZUL}
-                />
-              )}
-            </InputMask>
+              unmask={false}
+              onAccept={(value) => handleInputChange({ target: { name: 'telefone', value } })}
+              bordercolor={AZUL}
+              name="telefone"
+              placeholder="+55 (11) 91234-5678"
+            />
           ) : (
-            <ViewModeField>{userData.nome || 'Não informado'}</ViewModeField>
+            <ViewModeField>{userData.telefone || 'Não informado'}</ViewModeField>
           )}
         </InputGroup>
 
@@ -315,11 +331,9 @@ const ProfilePage = () => {
               value={formData.objetivo}
               onChange={handleInputChange}
               options={[
-                'Perda de peso',
+                'Manutenção',
                 'Ganho de massa muscular',
-                'Condicionamento físico',
-                'Melhora da saúde',
-                'Preparação esportiva'
+                'Perca de massa muscular'
               ]}
               bordercolor={AZUL}
             />
@@ -328,23 +342,22 @@ const ProfilePage = () => {
           )}
         </InputGroup>
 
-
         <SpacingLine />
-  
+
         <InputGroup>
-            <Label>📆 Data Nascimento</Label>
-            {isEditing ? (
-              <Input
-                type="date"
-                name="dataNascimento"
-                value={formData.dataNascimento}
-                onChange={handleInputChange}
-                bordercolor={AZUL}
-              />
-            ) : (
-              <ViewModeField>{userData.dataNascimento || 'Não informado'}</ViewModeField>
-            )}
-          </InputGroup>
+          <Label>📆 Data Nascimento</Label>
+          {isEditing ? (
+            <Input
+              type="date"
+              name="dataNascimento"
+              value={formData.dataNascimento}
+              onChange={handleInputChange}
+              bordercolor={AZUL}
+            />
+          ) : (
+            <ViewModeField>{userData.dataNascimento || 'Não informado'}</ViewModeField>
+          )}
+        </InputGroup>
 
         <DoubleInputContainer>
           <CompactInputGroup>
@@ -378,7 +391,7 @@ const ProfilePage = () => {
                 />
               </UnitWrapper>
             ) : (
-              <ViewModeField>{userData.telefone || 'Não informado'}</ViewModeField>
+              <ViewModeField>{userData.peso || 'Não informado'}</ViewModeField>
             )}
             {errors.peso && <ErrorMessage>{errors.peso}</ErrorMessage>}
           </CompactInputGroup>
@@ -402,30 +415,30 @@ const ProfilePage = () => {
         </InputRow>
 
         <Separator>
-            <span><img src="/assets/images/iconlogo.png" alt="iconLogo" /></span>
+          <span><img src="/assets/images/iconlogo.png" alt="iconLogo" /></span>
         </Separator>
 
         {isEditing && (
-            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', }}>
-              <PasswordButton to="/forgot-password">
-                🔐 Alterar Senha
-              </PasswordButton>
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <PasswordButton to="/forgot-password">
+              🔐 Alterar Senha
+            </PasswordButton>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <Button type="submit" cor={VERDE}>
-                  💾 Salvar Alterações
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  cor={LARANJA}
-                  onClick={() => setIsEditing(false)}
-                >
-                  ❌ Cancelar
-                </Button>
-              </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button type="submit" cor={VERDE}>
+                💾 Salvar Alterações
+              </Button>
+              
+              <Button 
+                type="button" 
+                cor={LARANJA}
+                onClick={() => setIsEditing(false)}
+              >
+                ❌ Cancelar
+              </Button>
             </div>
-          )}
+          </div>
+        )}
       </form>
     </Container>
   );

@@ -5,14 +5,16 @@ const defineUsuario = require("./Usuario");
 const defineProfissionais = require("./Profissionais");
 const defineNutricao = require("./Nutricao");
 const defineTreino = require("./Treino");
-const defineMetricasVinculos = require("./MetricasVinculos");
+const defineVinculoNutricional = require("./VinculoNutricional");  // novo
+const defineVinculoTreino = require("./VinculoTreino");            // novo
 
 // Definir os modelos
 const Usuario = defineUsuario(sequelize);
 const { Nutricionista, PersonalTrainer } = defineProfissionais(sequelize);
 const { Alimento, PlanoNutricional, DiarioAlimentar, Refeicao, AlimentoRefeicao } = defineNutricao(sequelize);
 const { Exercicio, PlanoTreino, ExerciciosDoTreino, HistoricoTreino } = defineTreino(sequelize);
-const { MetasUsuario, MetricasUsuario, VinculoNutricional, VinculoTreino } = defineMetricasVinculos(sequelize);
+const VinculoNutricional = defineVinculoNutricional(sequelize);  // novo
+const VinculoTreino = defineVinculoTreino(sequelize);            // novo
 
 // Associações de Usuario
 Usuario.hasOne(Nutricionista, { foreignKey: 'id_usuario', as: 'nutricionista' });
@@ -30,12 +32,8 @@ PlanoNutricional.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' })
 Usuario.hasMany(PlanoTreino, { foreignKey: 'id_criador_usuario', as: 'planosTreinoCriados' });
 PlanoTreino.belongsTo(Usuario, { foreignKey: 'id_criador_usuario', as: 'criadorUsuario' });
 
-Usuario.hasMany(MetricasUsuario, { foreignKey: 'id_usuario', as: 'metricas' });
-MetricasUsuario.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 
-Usuario.hasMany(MetasUsuario, { foreignKey: 'id_usuario', as: 'metas' });
-MetasUsuario.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
-
+// Associações com vinculos
 Usuario.hasMany(VinculoNutricional, { foreignKey: 'id_usuario', as: 'vinculosNutricionais' });
 VinculoNutricional.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 
@@ -105,8 +103,6 @@ module.exports = {
   PlanoTreino,
   ExerciciosDoTreino,
   HistoricoTreino,
-  MetasUsuario,
-  MetricasUsuario,
   VinculoNutricional,
   VinculoTreino,
 };

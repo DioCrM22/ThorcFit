@@ -12,7 +12,6 @@ const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/user');
 const alimentacaoRoutes = require('./src/routes/alimentacao');
 const treinoRoutes = require('./src/routes/treino');
-const metricasRoutes = require('./src/routes/metricas');
 const exerciciosRoutes = require('./src/routes/exercicios');
 const alimentosRoutes = require('./src/routes/alimentos');
 const vinculosRoutes = require('./src/routes/vinculos');
@@ -69,7 +68,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/alimentacao', alimentacaoRoutes);
 app.use('/api/treino', treinoRoutes);
-app.use('/api/metricas', metricasRoutes);
 app.use('/api/exercicios', exerciciosRoutes);
 app.use('/api/alimentos', alimentosRoutes);
 app.use('/api/vinculos', vinculosRoutes);
@@ -85,7 +83,6 @@ app.get('/api', (req, res) => {
       user: '/api/user',
       alimentacao: '/api/alimentacao',
       treino: '/api/treino',
-      metricas: '/api/metricas',
       exercicios: '/api/exercicios',
       alimentos: '/api/alimentos',
       vinculos: '/api/vinculos'

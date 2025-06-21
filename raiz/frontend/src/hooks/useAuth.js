@@ -38,9 +38,9 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (data) {
-        setUser(data);
-        return data;
+      if (data && data.usuario) {
+        setUser(data.usuario);
+        return data.usuario;
       }
       throw new Error('Dados inválidos');
     } catch (error) {
@@ -58,8 +58,11 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.get(`${API_BASE_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(data);
-      return data;
+      if (data && data.usuario) {
+        setUser(data.usuario);
+        return data.usuario;
+      }
+      return null;
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
       logout();
@@ -67,15 +70,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
+
   const updateProfile = useCallback(async (updatedData) => {
     setLoading(true);
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const { data } = await axios.put(`${API_BASE_URL}/api/user/profile`, updatedData, {
+      const { data } = await axios.put(`${API_BASE_URL}/api/user/usuario-perfil`, updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(data);
-      return null;
+      setUser(data.usuarioAtualizado || data);
+      return data.usuarioAtualizado || null;
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       return error.response?.data?.error || 'Erro ao atualizar perfil';
@@ -83,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
 
   const signup = useCallback(async (nome, email, senha, role, data_nascimento, extra) => {
     setLoading(true);

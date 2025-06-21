@@ -43,6 +43,16 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM("manutenção", "ganho", "perca"),
       allowNull: true,
     },
+    altura: {
+  type: DataTypes.DECIMAL(5,2),
+  allowNull: true,
+  comment: 'Altura em cm',
+},
+peso: {
+  type: DataTypes.DECIMAL(5,2),
+  allowNull: true,
+  comment: 'Peso em kg',
+},
 
     foto_perfil: {
       type: DataTypes.STRING(255),

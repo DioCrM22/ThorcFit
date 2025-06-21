@@ -4,30 +4,19 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-// Todas as rotas requerem autenticação
+// Aplica autenticação para todas as rotas daqui pra frente
 router.use(authMiddleware);
 
-// ✅ Rota que o frontend espera: GET /api/user/profile
-router.get('/profile', async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ error: 'Usuário não encontrado na sessão' });
-    }
-    res.json(user);
-  } catch (error) {
-    console.error('Erro ao carregar o perfil:', error);
-    res.status(500).json({ error: 'Erro interno ao buscar perfil' });
-  }
-});
+// Rota para obter perfil do usuário autenticado
+router.get('/profile', UserController.getProfile);
 
-// Atualizar perfil do usuário
+// Atualizar perfil do usuário autenticado
 router.put('/usuario-perfil',
   UserController.validateUpdateProfile,
   UserController.updateProfile
 );
 
-// Obter perfil público de outro usuário
+// Obter perfil público de um usuário pelo ID
 router.get('/usuario/:id/perfil',
   UserController.getPublicProfile
 );
@@ -37,12 +26,12 @@ router.get('/profissionais',
   UserController.searchProfessionals
 );
 
-// Obter estatísticas do usuário
+// Obter estatísticas do usuário autenticado
 router.get('/usuario/estatisticas',
   UserController.getUserStats
 );
 
-// Desativar conta
+// Desativar conta do usuário autenticado
 router.delete('/usuario/desativar',
   UserController.deactivateAccount
 );
