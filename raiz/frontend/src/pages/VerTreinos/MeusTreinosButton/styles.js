@@ -17,8 +17,9 @@ export const FloatingButton = styled(motion.button).attrs(props => ({
 }))`
   position: fixed;
   right: 20px;
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
+  top: 50px;
   border-radius: 50%;
   background: var(--bg-color);
   color: var(--text-color);
@@ -45,16 +46,18 @@ export const FloatingButton = styled(motion.button).attrs(props => ({
   }
 
   @media (max-width: 768px) {
-    width: 45px;
-    height: 45px;
-    right: 15px;
+    width: 55px;
+    height: 55px;
+    right: 20px;
+    top: 50px;
     font-size: 20px;
   }
 
   @media (max-width: 480px) {
-    width: 40px;
-    height: 40px;
-    right: 10px;
+    width: 55px;
+    height: 55px;
+    right: 20px;
+    top: 50px;
     font-size: 18px;
   }
 `;

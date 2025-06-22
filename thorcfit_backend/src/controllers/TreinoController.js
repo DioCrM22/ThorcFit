@@ -1,5 +1,6 @@
 const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
+const { DateTime } = require('luxon');
 const { 
   PlanoTreino, 
   Exercicio, 
@@ -136,7 +137,7 @@ class TreinoController {
         id_criador_usuario: req.userId,
         nome,
         descricao: observacoes,
-        data_criacao: new Date(),
+        data_criacao: new Date(new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })),
         status: 'ativo',
         duracao_estimada
       });
@@ -346,7 +347,7 @@ class TreinoController {
         id_criador_usuario: req.userId,
         nome: `${planoOriginal.nome} (Cópia)`,
         descricao: planoOriginal.descricao,
-        data_criacao: new Date(),
+        data_criacao: new Date(new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })),
         status: 'ativo',
         duracao_estimada: planoOriginal.duracao_estimada
       });
@@ -503,9 +504,9 @@ class TreinoController {
 
     } catch (error) {
       console.error('Erro ao finalizar treino:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
-    }
-  }
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
 
   // Verificar acesso ao plano
   static async verificarAcessoPlano(plano, userId) {

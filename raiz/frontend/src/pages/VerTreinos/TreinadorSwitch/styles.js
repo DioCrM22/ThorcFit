@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 
 export const FloatingButton = styled(motion.button)`
   position: fixed;
-  top: 90px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
+  top: 150px;  // Aumentei de 100px para 150px
+  right: 15px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: #FF6B35;
   color: white;
@@ -25,9 +25,9 @@ export const FloatingButton = styled(motion.button)`
   }
 
   @media (max-width: 768px) {
-    width: 45px;
-    height: 45px;
-    top: 80px;
+    width: 55px;
+    height: 55px;
+    top: 90px;
     right: 15px;
   }
 `;

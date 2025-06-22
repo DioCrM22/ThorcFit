@@ -17,7 +17,7 @@ export default function TreinadorSwitch({ treinadores, onSelectTreinador, curren
         onClick={() => setShowList(!showList)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        style={{ top: '150px' }}
+        style={{ top: '120px' }}
       >
         <FiRefreshCw size={20} color="white" />
       </S.FloatingButton>

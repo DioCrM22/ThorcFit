@@ -6,7 +6,7 @@ export default function MeusTreinosButton({
   onClick, 
   active, 
   mode = 'treinos',
-  position = { top: '90px', right: '20px' }
+  position = { top: '60px', right: '15px' }
 }) {
   // Define emoji e cores com base no modo
   const buttonConfig = {

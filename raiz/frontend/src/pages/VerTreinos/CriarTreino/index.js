@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../../config/axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNotification } from "../../../contexts/NotificationContext";
 import { FiX, FiCheck, FiTrash2, FiArrowLeft, FiArrowRight, FiEdit2 } from 'react-icons/fi';
 import * as S from './styles';
 
-const CriarTreino = ({ onClose }) => {
+const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTreinos
+  const { notify } = useNotification();
   const [etapaAtual, setEtapaAtual] = useState(1);
   const [exerciciosDisponiveis, setExerciciosDisponiveis] = useState([]);
   const [exerciciosFiltrados, setExerciciosFiltrados] = useState([]);
@@ -28,7 +30,6 @@ const CriarTreino = ({ onClose }) => {
     series: 3,
     repeticoes: 10,
     carga: '',
-    tempo: 30,
     descanso: 45,
     observacoes: '',
     ordem: ''
@@ -36,36 +37,33 @@ const CriarTreino = ({ onClose }) => {
 
   const API_URL = 'http://localhost:3001/api';
 
-  // Função para carregar exercícios do backend
-const carregarExercicios = async () => {
-  setCarregandoExercicios(true);
-  setErroCarregamento(null);
+  const carregarExercicios = async () => {
+    setCarregandoExercicios(true);
+    setErroCarregamento(null);
 
-  try {
-    const token = localStorage.getItem('authToken'); 
-    if (!token) throw new Error('Usuário não autenticado');
+    try {
+      const token = localStorage.getItem('authToken'); 
+      if (!token) throw new Error('Usuário não autenticado');
 
-    const response = await axios.get(`${API_URL}/exercicios`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      const response = await axios.get(`${API_URL}/exercicios`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    const exercicios = response.data.exercicios || response.data;
-    setExerciciosDisponiveis(exercicios);
-    setExerciciosFiltrados(exercicios);
-  } catch (error) {
-    console.error('Erro ao carregar exercícios:', error);
-    setErroCarregamento('Erro ao carregar exercícios. Tente novamente.');
-  } finally {
-    setCarregandoExercicios(false);
-  }
-};
+      const exercicios = response.data.exercicios || response.data;
+      setExerciciosDisponiveis(exercicios);
+      setExerciciosFiltrados(exercicios);
+    } catch (error) {
+      console.error('Erro ao carregar exercícios:', error);
+      setErroCarregamento('Erro ao carregar exercícios. Tente novamente.');
+    } finally {
+      setCarregandoExercicios(false);
+    }
+  };
 
+  useEffect(() => {
+    carregarExercicios();
+  }, []);
 
-useEffect(() => {
-  carregarExercicios();
-}, []);
-
-  // Filtra os exercícios conforme o texto digitado na busca
   useEffect(() => {
     if (!buscaExercicio.trim()) {
       setExerciciosFiltrados(exerciciosDisponiveis);
@@ -81,7 +79,6 @@ useEffect(() => {
     setExerciciosFiltrados(filtrados);
   }, [buscaExercicio, exerciciosDisponiveis]);
 
-  // Seleciona um exercício da lista para edição/adicionar
   const selecionarExercicio = (ex) => {
     setExercicioAtual({
       ...exercicioAtual,
@@ -91,7 +88,6 @@ useEffect(() => {
       series: 3,
       repeticoes: 10,
       carga: '',
-      tempo: 30,
       descanso: 45,
       observacoes: '',
       ordem: dadosTreino.exercicios.length + 1
@@ -99,7 +95,6 @@ useEffect(() => {
     setBuscaExercicio(ex.nome);
   };
 
-  // Salva o exercício atual no treino (novo ou edição)
   const salvarExercicio = () => {
     const exercicio = {
       ...exercicioAtual,
@@ -107,7 +102,6 @@ useEffect(() => {
       series: parseInt(exercicioAtual.series),
       repeticoes: parseInt(exercicioAtual.repeticoes),
       carga: exercicioAtual.carga ? parseFloat(exercicioAtual.carga) : null,
-      tempo: parseInt(exercicioAtual.tempo),
       descanso: parseInt(exercicioAtual.descanso),
       ordem: editandoExercicioIndex !== null ? dadosTreino.exercicios[editandoExercicioIndex].ordem : dadosTreino.exercicios.length + 1
     };
@@ -123,26 +117,22 @@ useEffect(() => {
     resetarFormularioExercicio();
   };
 
-  // Edita um exercício existente
   const editarExercicio = (i) => {
     const exerc = dadosTreino.exercicios[i];
     setExercicioAtual({ 
       ...exerc, 
       carga: exerc.carga || '',
-      tempo: exerc.tempo || 30,
       descanso: exerc.descanso || 45
     });
     setEditandoExercicioIndex(i);
     setBuscaExercicio(exerc.nome);
   };
 
-  // Remove um exercício do treino
   const removerExercicio = (i) => {
     const lista = dadosTreino.exercicios.filter((_, index) => index !== i);
     setDadosTreino({ ...dadosTreino, exercicios: lista.map((e, i) => ({ ...e, ordem: i + 1 })) });
   };
 
-  // Reseta o formulário do exercício para adicionar novo
   const resetarFormularioExercicio = () => {
     setExercicioAtual({
       id_exercicio: '', 
@@ -151,7 +141,6 @@ useEffect(() => {
       series: 3, 
       repeticoes: 10, 
       carga: '', 
-      tempo: 30,
       descanso: 45, 
       observacoes: '', 
       ordem: dadosTreino.exercicios.length + 1
@@ -160,12 +149,11 @@ useEffect(() => {
     setBuscaExercicio('');
   };
 
-  // Salva o treino completo no backend
   const salvarTreino = async () => {
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        alert('Usuário não autenticado. Faça login novamente.');
+        notify("Usuário não autenticado. Faça login novamente.", "success");
         return;
       }
 
@@ -179,7 +167,6 @@ useEffect(() => {
           series: e.series,
           repeticoes: e.repeticoes,
           carga: e.carga,
-          tempo: e.tempo,
           tempo_descanso: e.descanso,
           observacoes: e.observacoes,
           ordem: e.ordem
@@ -190,11 +177,17 @@ useEffect(() => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Treino criado com sucesso!');
+      notify("Treino criado com sucesso!", "success");
+
+      // ✅ Chama o fetchTreinos do pai
+      fetchTreinos();
+
+      // ✅ Fecha o modal
       onClose();
+
     } catch (err) {
       console.error('Erro ao salvar treino', err);
-      alert('Erro ao salvar treino');
+      notify("Erro ao salvar treino", "error");
     }
   };
 
@@ -342,15 +335,6 @@ useEffect(() => {
                       />
                     </S.FormGroup>
                     <S.FormGroup>
-                      <label>Tempo (s)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={exercicioAtual.tempo}
-                        onChange={e => setExercicioAtual({ ...exercicioAtual, tempo: e.target.value })}
-                      />
-                    </S.FormGroup>
-                    <S.FormGroup>
                       <label>Descanso (s)</label>
                       <input
                         type="number"
@@ -456,17 +440,16 @@ useEffect(() => {
                         <strong>{ex.ordem}. {ex.nome}</strong>
                       </div>
                       <div className="exercise-details">
-                        <span>{ex.series} séries x {ex.repeticoes} repetições</span>
-                        {ex.carga && <span>Carga: {ex.carga}kg</span>}
-                        <span>Descanso: {ex.descanso}s</span>
-                        {ex.tempo && ex.tempo > 0 && <span>Tempo: {ex.tempo}s</span>}
+                        <span><strong>Séries:</strong> {ex.series}</span>
+                        <span><strong>Repetições:</strong> {ex.repeticoes}</span>
+                        {ex.carga && <span><strong>Carga:</strong> {ex.carga}kg</span>}
+                        <span><strong>Descanso:</strong> {ex.descanso}s</span>
                       </div>
                       {ex.observacoes && (
                         <div className="observations">
                           <strong>Observações:</strong> {ex.observacoes}
                         </div>
                       )}
-                      {i < dadosTreino.exercicios.length - 1 && <hr />}
                     </div>
                   ))}
               </S.ReviewSection>

@@ -101,6 +101,7 @@ export const TabButton = styled(motion.button)`
   }
 `;
 
+
 export const TreinosGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -137,13 +138,17 @@ export const TreinoHeader = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  align-items: center;
+  align-items: flex-start; 
+  position: relative; 
+  padding-top: 5px; 
 `;
 
 export const TreinoDate = styled.span`
   font-weight: 600;
   font-size: 0.9rem;
   color: ${CINZA_ESCURO};
+  order: 2;
+  margin-left: 10px;
 
   @media (max-width: 480px) {
     font-size: 0.85rem;
@@ -157,6 +162,8 @@ export const TreinoType = styled.span`
   background: ${props => props.tipo === 'pessoal' ? '#e0f0ff' : '#fff4e0'};
   color: ${props => props.tipo === 'pessoal' ? AZUL : LARANJA};
   font-weight: 500;
+  margin-right: auto;
+  order: 1; 
 
   @media (max-width: 480px) {
     font-size: 0.75rem;
@@ -189,12 +196,14 @@ export const TreinoDetail = styled.p`
 `;
 
 export const TreinoAction = styled(motion.button)`
-  margin-top: auto;
+  flex: 1;
   padding: 10px;
-  width: 100%;
   border: none;
   border-radius: 8px;
-  background: ${props => props.status === 'pendente' ? VERDE : props.status === 'em-andamento' ? LARANJA : AZUL};
+  background: ${props => 
+    props.status === 'ativo' ? VERDE : 
+    props.status === 'em-andamento' ? LARANJA : 
+    AZUL};
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -202,17 +211,23 @@ export const TreinoAction = styled(motion.button)`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.2s;
+  transition: all 0.2s;
   font-size: 0.95rem;
 
   &:hover {
-    background: ${props => props.status === 'pendente' ? '#2bc418' : props.status === 'em-andamento' ? '#e65c00' : '#005bb7'};
+    background: ${props => 
+      props.status === 'ativo' ? '#3d8b40' : 
+      props.status === 'em-andamento' ? '#e68a00' : 
+      '#0d8bf2'};
+    transform: translateY(-1px);
   }
+`;
 
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 0.9rem;
-  }
+export const ActionButtonsContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  width: 100%;
 `;
 
 export const EmptyMessage = styled.div`
@@ -319,30 +334,36 @@ export const ProfileType = styled.span`
 `;
 
 export const RemoveButton = styled(motion.button)`
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
   background: ${VERMELHO};
   color: white;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  gap: 8px;
+  transition: all 0.2s;
+  font-size: 0.95rem;
 
   &:hover {
     background: #cc0000;
+    transform: translateY(-1px);
   }
+`;
 
-  @media (max-width: 480px) {
-    width: 25px;
-    height: 25px;
-    top: 8px;
-    right: 8px;
-  }
+export const MeusTreinosButton = styled(motion.button)>`
+  position: fixed;
+  top: 100px;
+  right: 20px;
+`;
+
+export const TreinadorSwitchWrapper = styled.div`
+  position: fixed;
+  top: 180px;
+  right: 20px;
 `;
 
 /* Novo estilo para o botão flutuante */
@@ -350,8 +371,8 @@ export const FloatingButton = styled(motion.button)`
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: ${LARANJA};
   color: white;
@@ -374,5 +395,78 @@ export const FloatingButton = styled(motion.button)`
     height: 56px;
     bottom: 16px;
     right: 16px;
+  }
+`;
+
+//popup
+
+// Adicione no seu styles.js
+export const PopupOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+export const PopupContainer = styled(motion.div)`
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 400px;
+`;
+
+export const PopupTitle = styled.h3`
+  margin-top: 0;
+  color: ${CINZA_ESCURO};
+  font-size: 1.2rem;
+`;
+
+export const PopupMessage = styled.p`
+  color: ${CINZA};
+  margin-bottom: 24px;
+`;
+
+export const PopupButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+`;
+
+export const PopupButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+`;
+
+export const PopupCancelButton = styled(PopupButton)`
+  background: ${CINZA_CLARO};
+  color: ${CINZA_ESCURO};
+
+  &:hover {
+    background: #e0e0e0;
+  }
+`;
+
+export const PopupConfirmButton = styled(PopupButton)`
+  background: ${VERMELHO};
+  color: white;
+
+  &:hover {
+    background: #cc0000;
   }
 `;

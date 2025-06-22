@@ -21,6 +21,8 @@ export default function VerTreino() {
   const [viewMode, setViewMode] = useState('pessoal');
   const [treinadorSelecionado, setTreinadorSelecionado] = useState(null);
   const [isCriarTreinoOpen, setIsCriarTreinoOpen] = useState(false);
+  const [popupAberto, setPopupAberto] = useState(false);
+  const [treinoParaExcluir, setTreinoParaExcluir] = useState(null);
 
 
   const API_URL = 'http://localhost:3001/api';
@@ -32,6 +34,7 @@ export default function VerTreino() {
       console.error('Token inválido ou não encontrado no localStorage:', token);
       return null;
     }
+  return token;
   };
 
 const fetchTreinadores = useCallback(async () => {
@@ -119,19 +122,21 @@ const handleAcaoTreino = (id) => {
 
 // Deleta treino após confirmação
 const handleDeleteTreino = async (id) => {
-  if (window.confirm('Deseja realmente deletar este treino?')) {
-    try {
-      const token = getToken();
-      if (!token) return;
-
-      await axios.delete(`${API_URL}/treino/plano/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      fetchTreinos();
-    } catch (error) {
-      console.error('Erro ao deletar treino:', error);
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('Token não encontrado');
+      return;
     }
+
+    await axios.delete(`${API_URL}/treino/plano/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setTreinos(prevTreinos => prevTreinos.filter(treino => treino.id_plano_treino !== id));
+    setPopupAberto(false);
+    console.log('Treino excluído com sucesso');
+  } catch (error) {
+    console.error('Erro ao excluir treino:', error);
   }
 };
 
@@ -195,46 +200,84 @@ const handleDeleteTreino = async (id) => {
             ) : (
               treinosFiltrados.map((treino) => (
                 <S.TreinoCard
-                  key={treino.id_plano_treino}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <S.TreinoHeader>
-                    <S.TreinoDate>{formatarData(treino.data_criacao)}</S.TreinoDate>
-                    <S.TreinoType tipo={treino.tipo || 'pessoal'}>
-                      {treino.tipo?.toUpperCase() || 'PESSOAL'}
-                    </S.TreinoType>
-                  </S.TreinoHeader>
-
-                  <S.TreinoName>{treino.nome}</S.TreinoName>
-
-                  {treino.descricao && (
-                    <S.TreinoDetail>📝 {treino.descricao}</S.TreinoDetail>
-                  )}
-
-                  <S.TreinoDetail>💪 {treino.exercicios_treino?.length || 0} exercício(s)</S.TreinoDetail>
-
-                  <S.TreinoAction
-                    status={treino.status}
-                    onClick={() => handleAcaoTreino(treino.id_plano_treino)}
-                    whileHover={{ scale: 1.05 }}
+                    key={treino.id_plano_treino}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
                   >
-                    {treino.status === 'ativo' && <><FiPlus size={14} /> Iniciar</>}
-                    {treino.status === 'em-andamento' && <><FiClock size={14} /> Continuar</>}
-                    {treino.status === 'finalizado' && <><FiCheck size={14} /> Visualizar</>}
-                  </S.TreinoAction>
+                    <S.TreinoHeader>
+                      <S.TreinoDate>{formatarData(treino.data_criacao)}</S.TreinoDate>
+                      <S.TreinoType tipo={treino.tipo || 'pessoal'}>
+                        {treino.tipo?.toUpperCase() || 'PESSOAL'}
+                      </S.TreinoType>
+                    </S.TreinoHeader>
 
-                  <S.RemoveButton onClick={() => handleDeleteTreino(treino.id_plano_treino)}>
-                    <FiTrash2 />
-                  </S.RemoveButton>
-                </S.TreinoCard>
+                    <S.TreinoName>{treino.nome}</S.TreinoName>
+
+                    {treino.descricao && (
+                      <S.TreinoDetail>📝 {treino.descricao}</S.TreinoDetail>
+                    )}
+
+                    <S.TreinoDetail>💪 {treino.exercicios_treino?.length || 0} exercício(s)</S.TreinoDetail>
+
+                    <S.ActionButtonsContainer>
+                      <S.TreinoAction
+                        status={treino.status}
+                        onClick={() => handleAcaoTreino(treino.id_plano_treino)}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {treino.status === 'ativo' && <><FiPlus size={14} /> Iniciar</>}
+                        {treino.status === 'em-andamento' && <><FiClock size={14} /> Continuar</>}
+                        {treino.status === 'finalizado' && <><FiCheck size={14} /> Visualizar</>}
+                      </S.TreinoAction>
+
+                      <S.RemoveButton 
+                      onClick={() => {
+                        setTreinoParaExcluir(treino.id_plano_treino);
+                        setPopupAberto(true);
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <FiTrash2 size={14} /> Excluir
+                    </S.RemoveButton>
+                    </S.ActionButtonsContainer>
+                  </S.TreinoCard>
               ))
             )}
           </S.TreinosGrid>
         </AnimatePresence>
       </S.Content>
+
+      {popupAberto && (
+          <S.PopupOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <S.PopupContainer
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <S.PopupTitle>Confirmar Exclusão</S.PopupTitle>
+              <S.PopupMessage>Tem certeza que deseja excluir este treino?</S.PopupMessage>
+              <S.PopupButtons>
+                <S.PopupCancelButton onClick={() => setPopupAberto(false)}>
+                  Voltar
+                </S.PopupCancelButton>
+                <S.PopupConfirmButton 
+                  onClick={() => {
+                    handleDeleteTreino(treinoParaExcluir);
+                    setPopupAberto(false);
+                  }}
+                >
+                  Excluir
+                </S.PopupConfirmButton>
+              </S.PopupButtons>
+            </S.PopupContainer>
+          </S.PopupOverlay>
+        )}
 
       {isCriarTreinoOpen && (
         <CriarTreino

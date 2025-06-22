@@ -123,6 +123,15 @@ export const ProgressStep = styled.div`
 // Etapa Container
 export const EtapaContainer = styled.div`
   padding: 20px 0;
+
+  @media (max-width: 480px) {
+    padding: 15px 0;
+    
+    h3 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+  }
 `;
 
 // Search Components
@@ -130,12 +139,21 @@ export const SearchContainer = styled.div`
   position: relative;
   margin-bottom: 20px;
 
+  @media (max-width: 768px) {
+    margin-bottom: ${({ hasResults }) => hasResults ? '0' : '20px'};
+  }
+
   input {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 15px;
+    
+    @media (max-width: 768px) {
+      padding: 14px 15px;
+      font-size: 16px;
+    }
   }
 `;
 
@@ -151,20 +169,41 @@ export const ExerciciosDropdown = styled.div`
   overflow-y: auto;
   z-index: 10;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 5px;
 
-  div {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background 0.2s;
+  @media (max-width: 768px) {
+    position: relative;
+    margin-top: 10px;
+    max-height: none;
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+  }
 
-    &:hover {
-      background: ${CINZA_CLARO};
+  .exercicio-item {
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #eee;
+    
+    strong {
+      font-size: 15px;
+      margin-bottom: 3px;
     }
-
-    small {
+    
+    span {
+      font-size: 13px;
       color: ${CINZA};
-      font-size: 0.8rem;
     }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .no-results {
+    padding: 15px;
+    text-align: center;
+    color: ${CINZA};
   }
 `;
 
@@ -173,13 +212,6 @@ export const ExercicioFormContainer = styled.div`
   background: ${CINZA_CLARO};
   border-radius: 10px;
   padding: 20px;
-  margin-bottom: 20px;
-`;
-
-export const ExerciseDetailsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px;
   margin-bottom: 20px;
 `;
 
@@ -259,10 +291,73 @@ export const ReviewSection = styled.div`
   margin-bottom: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
-  hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 10px 0;
+  h4 {
+    margin-top: 0;
+    color: ${AZUL};
+    font-size: 1.1rem;
+  }
+
+  .exercise-review {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f5f5f5;
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .exercise-header {
+      margin-bottom: 8px;
+      
+      strong {
+        font-size: 16px;
+        color: ${CINZA_ESCURO};
+      }
+    }
+
+    .exercise-details {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+
+      span {
+        font-size: 14px;
+        color: ${CINZA};
+        display: block;
+        
+        @media (min-width: 480px) {
+          display: inline-block;
+          margin-right: 15px;
+        }
+      }
+    }
+
+    .observations {
+      font-size: 14px;
+      color: ${CINZA_ESCURO};
+      padding: 8px;
+      background: ${CINZA_CLARO};
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 15px;
+    
+    .exercise-review {
+      .exercise-details {
+        flex-direction: column;
+        
+        span {
+          margin-right: 0;
+          margin-bottom: 5px;
+        }
+      }
+    }
   }
 `;
 
@@ -398,6 +493,34 @@ export const FormGroup = styled.div`
     &.input-group {
       grid-template-columns: 1fr;
     }
+  }
+`;
+
+export const ExerciseDetailsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+    
+    ${FormGroup} {
+      margin-bottom: 0;
+      
+      label {
+        font-size: 14px;
+      }
+      
+      input {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+    
+    ${props => props.fullWidth && `
+      grid-column: 1 / -1;
+    `}
   }
 `;
 

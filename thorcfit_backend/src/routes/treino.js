@@ -39,7 +39,7 @@ router.delete('/plano/:id',
 );
 
 // Iniciar treino
-router.get('/iniciar/:id',
+router.post('/iniciar/:id',
   TreinoController.iniciarTreino
 );
 
