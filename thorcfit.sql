@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 21/06/2025 às 03:30
+-- Tempo de geração: 22/06/2025 às 19:22
 -- Versão do servidor: 10.4.28-MariaDB
 -- Versão do PHP: 8.2.4
 
@@ -25,8 +25,6 @@ DELIMITER $$
 --
 -- Procedimentos
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_atualizar_metricas` (IN `p_id_usuario` INT, IN `p_peso` DECIMAL(5,2), IN `p_altura` DECIMAL(5,2))   BEGIN DECLARE v_imc DECIMAL(5,2); SET v_imc = p_peso / POW(p_altura/100, 2); INSERT INTO metricas_usuario (id_usuario, data_registro, peso, altura, imc) VALUES (p_id_usuario, CURDATE(), p_peso, p_altura, v_imc); UPDATE usuario SET peso = p_peso, altura = p_altura WHERE id_usuario = p_id_usuario; END$$
-
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_criar_plano_integrado` (IN `p_id_usuario` INT, IN `p_id_nutricionista` INT, IN `p_id_personal` INT, IN `p_objetivo` TEXT)   BEGIN DECLARE v_id_plano_nutricional INT; DECLARE v_id_plano_treino INT; INSERT INTO plano_nutricional (id_usuario, id_profissional, data_criacao, objetivo) VALUES (p_id_usuario, p_id_nutricionista, CURDATE(), p_objetivo); SET v_id_plano_nutricional = LAST_INSERT_ID(); INSERT INTO plano_treino (id_usuario, id_profissional, nome, data_criacao, objetivo) VALUES (p_id_usuario, p_id_personal, CONCAT('Plano ', p_objetivo), CURDATE(), p_objetivo); SET v_id_plano_treino = LAST_INSERT_ID(); INSERT INTO vinculo_profissional (id_usuario, id_profissional, tipo_vinculo, data_inicio) VALUES (p_id_usuario, p_id_nutricionista, 'nutricionista', CURDATE()), (p_id_usuario, p_id_personal, 'personal_trainer', CURDATE()); SELECT v_id_plano_nutricional AS id_plano_nutricional, v_id_plano_treino AS id_plano_treino; END$$
 
 DELIMITER ;
@@ -467,7 +465,8 @@ ALTER TABLE `usuario`
   ADD UNIQUE KEY `email_23` (`email`),
   ADD UNIQUE KEY `email_24` (`email`),
   ADD UNIQUE KEY `email_25` (`email`),
-  ADD UNIQUE KEY `email_26` (`email`);
+  ADD UNIQUE KEY `email_26` (`email`),
+  ADD UNIQUE KEY `email_27` (`email`);
 
 --
 -- Índices de tabela `vinculo_nutricional`
@@ -535,7 +534,7 @@ ALTER TABLE `plano_nutricional`
 -- AUTO_INCREMENT de tabela `plano_treino`
 --
 ALTER TABLE `plano_treino`
-  MODIFY `id_plano_treino` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_plano_treino` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `refeicao`
@@ -601,15 +600,15 @@ ALTER TABLE `personal_trainer`
 -- Restrições para tabelas `plano_nutricional`
 --
 ALTER TABLE `plano_nutricional`
-  ADD CONSTRAINT `plano_nutricional_ibfk_155` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `plano_nutricional_ibfk_156` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `plano_nutricional_ibfk_157` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `plano_nutricional_ibfk_158` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `plano_treino`
 --
 ALTER TABLE `plano_treino`
-  ADD CONSTRAINT `plano_treino_ibfk_153` FOREIGN KEY (`id_criador_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `plano_treino_ibfk_154` FOREIGN KEY (`id_criador_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `plano_treino_ibfk_155` FOREIGN KEY (`id_criador_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `plano_treino_ibfk_156` FOREIGN KEY (`id_criador_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `refeicao`
@@ -621,15 +620,15 @@ ALTER TABLE `refeicao`
 -- Restrições para tabelas `vinculo_nutricional`
 --
 ALTER TABLE `vinculo_nutricional`
-  ADD CONSTRAINT `vinculo_nutricional_ibfk_147` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `vinculo_nutricional_ibfk_148` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `vinculo_nutricional_ibfk_149` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `vinculo_nutricional_ibfk_150` FOREIGN KEY (`id_nutricionista`) REFERENCES `nutricionista` (`id_nutricionista`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `vinculo_treino`
 --
 ALTER TABLE `vinculo_treino`
-  ADD CONSTRAINT `vinculo_treino_ibfk_143` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `vinculo_treino_ibfk_144` FOREIGN KEY (`id_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `vinculo_treino_ibfk_145` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `vinculo_treino_ibfk_146` FOREIGN KEY (`id_personal`) REFERENCES `personal_trainer` (`id_personal`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

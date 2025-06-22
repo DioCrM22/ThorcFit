@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../../config/axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNotification } from "../../../contexts/NotificationContext";
 import { FiX, FiCheck, FiTrash2, FiArrowLeft, FiArrowRight, FiEdit2 } from 'react-icons/fi';
 import * as S from './styles';
 
 const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTreinos
-  const { notify } = useNotification();
   const [etapaAtual, setEtapaAtual] = useState(1);
   const [exerciciosDisponiveis, setExerciciosDisponiveis] = useState([]);
   const [exerciciosFiltrados, setExerciciosFiltrados] = useState([]);
@@ -30,6 +28,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
     series: 3,
     repeticoes: 10,
     carga: '',
+    tempo: 30,
     descanso: 45,
     observacoes: '',
     ordem: ''
@@ -88,6 +87,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
       series: 3,
       repeticoes: 10,
       carga: '',
+      tempo: 30,
       descanso: 45,
       observacoes: '',
       ordem: dadosTreino.exercicios.length + 1
@@ -102,6 +102,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
       series: parseInt(exercicioAtual.series),
       repeticoes: parseInt(exercicioAtual.repeticoes),
       carga: exercicioAtual.carga ? parseFloat(exercicioAtual.carga) : null,
+      tempo: parseInt(exercicioAtual.tempo),
       descanso: parseInt(exercicioAtual.descanso),
       ordem: editandoExercicioIndex !== null ? dadosTreino.exercicios[editandoExercicioIndex].ordem : dadosTreino.exercicios.length + 1
     };
@@ -122,6 +123,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
     setExercicioAtual({ 
       ...exerc, 
       carga: exerc.carga || '',
+      tempo: exerc.tempo || 30,
       descanso: exerc.descanso || 45
     });
     setEditandoExercicioIndex(i);
@@ -141,6 +143,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
       series: 3, 
       repeticoes: 10, 
       carga: '', 
+      tempo: 30,
       descanso: 45, 
       observacoes: '', 
       ordem: dadosTreino.exercicios.length + 1
@@ -153,7 +156,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        notify("Usuário não autenticado. Faça login novamente.", "success");
+        alert('Usuário não autenticado. Faça login novamente.');
         return;
       }
 
@@ -167,6 +170,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
           series: e.series,
           repeticoes: e.repeticoes,
           carga: e.carga,
+          tempo: e.tempo,
           tempo_descanso: e.descanso,
           observacoes: e.observacoes,
           ordem: e.ordem
@@ -177,7 +181,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      notify("Treino criado com sucesso!", "success");
+      alert('Treino criado com sucesso!');
 
       // ✅ Chama o fetchTreinos do pai
       fetchTreinos();
@@ -187,7 +191,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
 
     } catch (err) {
       console.error('Erro ao salvar treino', err);
-      notify("Erro ao salvar treino", "error");
+      alert('Erro ao salvar treino');
     }
   };
 
@@ -335,6 +339,15 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
                       />
                     </S.FormGroup>
                     <S.FormGroup>
+                      <label>Tempo (s)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={exercicioAtual.tempo}
+                        onChange={e => setExercicioAtual({ ...exercicioAtual, tempo: e.target.value })}
+                      />
+                    </S.FormGroup>
+                    <S.FormGroup>
                       <label>Descanso (s)</label>
                       <input
                         type="number"
@@ -440,16 +453,17 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
                         <strong>{ex.ordem}. {ex.nome}</strong>
                       </div>
                       <div className="exercise-details">
-                        <span><strong>Séries:</strong> {ex.series}</span>
-                        <span><strong>Repetições:</strong> {ex.repeticoes}</span>
-                        {ex.carga && <span><strong>Carga:</strong> {ex.carga}kg</span>}
-                        <span><strong>Descanso:</strong> {ex.descanso}s</span>
+                        <span>{ex.series} séries x {ex.repeticoes} repetições</span>
+                        {ex.carga && <span>Carga: {ex.carga}kg</span>}
+                        <span>Descanso: {ex.descanso}s</span>
+                        {ex.tempo && ex.tempo > 0 && <span>Tempo: {ex.tempo}s</span>}
                       </div>
                       {ex.observacoes && (
                         <div className="observations">
                           <strong>Observações:</strong> {ex.observacoes}
                         </div>
                       )}
+                      {i < dadosTreino.exercicios.length - 1 && <hr />}
                     </div>
                   ))}
               </S.ReviewSection>
