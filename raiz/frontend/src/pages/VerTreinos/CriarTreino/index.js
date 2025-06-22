@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from '../../../config/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiTrash2, FiArrowLeft, FiArrowRight, FiEdit2 } from 'react-icons/fi';
+import { useNotification } from "../../../contexts/NotificationContext";
 import * as S from './styles';
 
 const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTreinos
@@ -12,6 +13,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
   const [carregandoExercicios, setCarregandoExercicios] = useState(false);
   const [erroCarregamento, setErroCarregamento] = useState(null);
   const [editandoExercicioIndex, setEditandoExercicioIndex] = useState(null);
+  const { notify } = useNotification();
 
   const [dadosTreino, setDadosTreino] = useState({
     nome: '',
@@ -156,7 +158,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        alert('Usuário não autenticado. Faça login novamente.');
+        notify("Usuário não autenticado. Faça login novamente.", "success");
         return;
       }
 
@@ -181,7 +183,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Treino criado com sucesso!');
+      notify("Treino criado com sucesso!", "success");
 
       // ✅ Chama o fetchTreinos do pai
       fetchTreinos();
@@ -191,7 +193,7 @@ const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTre
 
     } catch (err) {
       console.error('Erro ao salvar treino', err);
-      alert('Erro ao salvar treino');
+      notify("Erro ao salvar treino", "error");
     }
   };
 
