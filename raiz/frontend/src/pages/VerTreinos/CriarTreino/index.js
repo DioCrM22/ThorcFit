@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiTrash2, FiArrowLeft, FiArrowRight, FiEdit2 } from 'react-icons/fi';
 import * as S from './styles';
 
-const CriarTreino = ({ onClose }) => {
+const CriarTreino = ({ onClose, fetchTreinos }) => {  // ✅ Adicionado fetchTreinos
   const [etapaAtual, setEtapaAtual] = useState(1);
   const [exerciciosDisponiveis, setExerciciosDisponiveis] = useState([]);
   const [exerciciosFiltrados, setExerciciosFiltrados] = useState([]);
@@ -36,36 +36,33 @@ const CriarTreino = ({ onClose }) => {
 
   const API_URL = 'http://localhost:3001/api';
 
-  // Função para carregar exercícios do backend
-const carregarExercicios = async () => {
-  setCarregandoExercicios(true);
-  setErroCarregamento(null);
+  const carregarExercicios = async () => {
+    setCarregandoExercicios(true);
+    setErroCarregamento(null);
 
-  try {
-    const token = localStorage.getItem('authToken'); 
-    if (!token) throw new Error('Usuário não autenticado');
+    try {
+      const token = localStorage.getItem('authToken'); 
+      if (!token) throw new Error('Usuário não autenticado');
 
-    const response = await axios.get(`${API_URL}/exercicios`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      const response = await axios.get(`${API_URL}/exercicios`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    const exercicios = response.data.exercicios || response.data;
-    setExerciciosDisponiveis(exercicios);
-    setExerciciosFiltrados(exercicios);
-  } catch (error) {
-    console.error('Erro ao carregar exercícios:', error);
-    setErroCarregamento('Erro ao carregar exercícios. Tente novamente.');
-  } finally {
-    setCarregandoExercicios(false);
-  }
-};
+      const exercicios = response.data.exercicios || response.data;
+      setExerciciosDisponiveis(exercicios);
+      setExerciciosFiltrados(exercicios);
+    } catch (error) {
+      console.error('Erro ao carregar exercícios:', error);
+      setErroCarregamento('Erro ao carregar exercícios. Tente novamente.');
+    } finally {
+      setCarregandoExercicios(false);
+    }
+  };
 
+  useEffect(() => {
+    carregarExercicios();
+  }, []);
 
-useEffect(() => {
-  carregarExercicios();
-}, []);
-
-  // Filtra os exercícios conforme o texto digitado na busca
   useEffect(() => {
     if (!buscaExercicio.trim()) {
       setExerciciosFiltrados(exerciciosDisponiveis);
@@ -81,7 +78,6 @@ useEffect(() => {
     setExerciciosFiltrados(filtrados);
   }, [buscaExercicio, exerciciosDisponiveis]);
 
-  // Seleciona um exercício da lista para edição/adicionar
   const selecionarExercicio = (ex) => {
     setExercicioAtual({
       ...exercicioAtual,
@@ -99,7 +95,6 @@ useEffect(() => {
     setBuscaExercicio(ex.nome);
   };
 
-  // Salva o exercício atual no treino (novo ou edição)
   const salvarExercicio = () => {
     const exercicio = {
       ...exercicioAtual,
@@ -123,7 +118,6 @@ useEffect(() => {
     resetarFormularioExercicio();
   };
 
-  // Edita um exercício existente
   const editarExercicio = (i) => {
     const exerc = dadosTreino.exercicios[i];
     setExercicioAtual({ 
@@ -136,13 +130,11 @@ useEffect(() => {
     setBuscaExercicio(exerc.nome);
   };
 
-  // Remove um exercício do treino
   const removerExercicio = (i) => {
     const lista = dadosTreino.exercicios.filter((_, index) => index !== i);
     setDadosTreino({ ...dadosTreino, exercicios: lista.map((e, i) => ({ ...e, ordem: i + 1 })) });
   };
 
-  // Reseta o formulário do exercício para adicionar novo
   const resetarFormularioExercicio = () => {
     setExercicioAtual({
       id_exercicio: '', 
@@ -160,7 +152,6 @@ useEffect(() => {
     setBuscaExercicio('');
   };
 
-  // Salva o treino completo no backend
   const salvarTreino = async () => {
     try {
       const token = localStorage.getItem('authToken');
@@ -191,7 +182,13 @@ useEffect(() => {
       });
 
       alert('Treino criado com sucesso!');
+
+      // ✅ Chama o fetchTreinos do pai
+      fetchTreinos();
+
+      // ✅ Fecha o modal
       onClose();
+
     } catch (err) {
       console.error('Erro ao salvar treino', err);
       alert('Erro ao salvar treino');

@@ -32,6 +32,7 @@ export default function VerTreino() {
       console.error('Token inválido ou não encontrado no localStorage:', token);
       return null;
     }
+    return token;
   };
 
 const fetchTreinadores = useCallback(async () => {
