@@ -25,7 +25,6 @@ class UserController {
         telefone,
         genero,
         data_nascimento,
-        foto_perfil,
         id_objetivo,
         altura,
         peso,
@@ -35,6 +34,17 @@ class UserController {
         preco_consulta,
         preco_sessao
       } = req.body;
+
+      let foto_perfil = req.body.foto_perfil;
+
+      // Se veio um arquivo, ele estará no req.files
+      if (req.files && req.files.length > 0) {
+        const file = req.files.find(f => f.fieldname === 'foto_perfil');
+        if (file) {
+          // Se quiser salvar a imagem como base64:
+          foto_perfil = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+        }
+      }
 
       const usuario = await Usuario.findByPk(req.userId, {
         include: [
@@ -56,6 +66,7 @@ class UserController {
       if (id_objetivo !== undefined) dadosAtualizacao.id_objetivo = id_objetivo;
       if (altura !== undefined) dadosAtualizacao.altura = altura;
       if (peso !== undefined) dadosAtualizacao.peso = peso;
+      if (foto_perfil) dadosAtualizacao.foto_perfil = foto_perfil;
 
       await usuario.update(dadosAtualizacao);
 

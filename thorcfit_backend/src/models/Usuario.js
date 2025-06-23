@@ -55,7 +55,7 @@ peso: {
 },
 
     foto_perfil: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT('long'),
       allowNull: true,
     },
 

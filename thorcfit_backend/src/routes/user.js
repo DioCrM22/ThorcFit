@@ -1,8 +1,10 @@
 const express = require('express');
+const multer = require('multer');
 const UserController = require('../controllers/UserController');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
+const upload = multer();
 
 // Aplica autenticação para todas as rotas daqui pra frente
 router.use(authMiddleware);
@@ -12,6 +14,7 @@ router.get('/profile', UserController.getProfile);
 
 // Atualizar perfil do usuário autenticado
 router.put('/usuario-perfil',
+  upload.any(),
   UserController.validateUpdateProfile,
   UserController.updateProfile
 );

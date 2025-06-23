@@ -13,28 +13,43 @@ export default function Sidebar({ open, onClose }) {
   const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
-    if (user?.id) {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  if (user?.id) {
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-      if (user.metodo_login === 'google') {
-        setImageSrc(user.foto_perfil || "/assets/images/default-avatar.png");
-      } else {
-        axios
-          .get(`${API_URL}/api/foto-perfil-base64/${user.id}`)
-          .then((res) => res.data.image && setImageSrc(res.data.image))
-          .catch(() => setImageSrc(null));
-      }
-
+    if (user.metodo_login === 'google') {
+      setImageSrc(user.foto_perfil || "/assets/images/default-avatar.png");
+    } else if (user.foto_perfil?.startsWith('data:image')) {
+      // Foto do banco no formato Base64 já pronta
+      setImageSrc(user.foto_perfil);
+    } else {
+      // Caso ainda precise buscar no back-end
       axios
-        .get(`${API_URL}/api/usuario-detalhes/${user.id}`, {
+        .get(`${API_URL}/api/foto-perfil-base64/${user.id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         })
-        .then((response) => setUserDetails(response.data))
-        .catch((error) => console.error('Erro ao buscar detalhes:', error));
+        .then((res) => {
+          if (res.data?.image?.startsWith('data:image')) {
+            setImageSrc(res.data.image);
+          } else {
+            setImageSrc("/assets/images/default-avatar.png");
+          }
+        })
+        .catch(() => setImageSrc("/assets/images/default-avatar.png"));
     }
-  }, [user]);
+
+    axios
+      .get(`${API_URL}/api/usuario-detalhes/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      })
+      .then((response) => setUserDetails(response.data))
+      .catch((error) => console.error('Erro ao buscar detalhes:', error));
+  }
+}, [user]);
+
 
   const handleNavigate = (path) => {
     navigate(path);

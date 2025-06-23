@@ -72,21 +72,31 @@ export const AuthProvider = ({ children }) => {
 
 
   const updateProfile = useCallback(async (updatedData) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem(TOKEN_KEY);
-      const { data } = await axios.put(`${API_BASE_URL}/api/user/usuario-perfil`, updatedData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(data.usuarioAtualizado || data);
-      return data.usuarioAtualizado || null;
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
-      return error.response?.data?.error || 'Erro ao atualizar perfil';
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    await axios.put(`${API_BASE_URL}/api/user/usuario-perfil`, updatedData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    // Buscar o perfil completo atualizado
+    const { data } = await axios.get(`${API_BASE_URL}/api/user/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (data && data.usuario) {
+      setUser(data.usuario);
     }
-  }, []);
+
+    return data.usuario || null;
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    return error.response?.data?.error || 'Erro ao atualizar perfil';
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
 
   const signup = useCallback(async (nome, email, senha, role, data_nascimento, extra) => {

@@ -47,16 +47,17 @@ const MaskedInput = styled(IMaskInput)`
 `;
 
 const ProfilePage = () => {
-  const [userData, setUserData] = useState({
-    nome: 'Carregando...',
-    telefone: 'Carregando...',
-    dataNascimento: 'Carregando...',
-    genero: 'Carregando...',
-    altura: 'Carregando...',
-    peso: 'Carregando...',
-    objetivo: 'Carregando...',
-    foto_perfil: null
-  });
+
+const [userData, setUserData] = useState({
+  nome: '',
+  telefone: '',
+  dataNascimento: '',
+  genero: '',
+  altura: '',
+  peso: '',
+  objetivo: '',
+  foto_perfil: null
+});
 
   const [formData, setFormData] = useState({ ...userData });
   const [errors, setErrors] = useState({});
@@ -67,22 +68,34 @@ const ProfilePage = () => {
   const { checkSession } = useAuth();
   const navigate = useNavigate();
 
+  const objetivoTexto = {
+    'manutenção': 'Manutenção',
+    'ganho': 'Ganho de massa muscular',
+    'perca': 'Perca de massa muscular'
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const user = await checkSession();
         if (user) {
+          const formatarData = (dataISO) => {
+            if (!dataISO) return '';
+            const [ano, mes, dia] = dataISO.split('-');
+            return `${dia}/${mes}/${ano}`;
+          };
+
           const formattedData = {
             nome: user.nome || '',
             telefone: user.telefone || '',
-            dataNascimento: user.data_nascimento || '',
+            dataNascimento: formatarData(user.data_nascimento),
             genero: user.genero || '',
             altura: user.altura ? user.altura.toString() : '',
             peso: user.peso ? user.peso.toString() : '',
-            objetivo: user.objetivo || '',
+            objetivo: user.id_objetivo || '',
             foto_perfil: user.foto_perfil || null
           };
-          
+
           setUserData(formattedData);
           setFormData(formattedData);
         }
@@ -91,7 +104,6 @@ const ProfilePage = () => {
         console.error('Detalhes do erro:', error);
       }
     };
-  
     loadProfile();
   }, [checkSession]);
 
@@ -101,16 +113,39 @@ const ProfilePage = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    
-    let processedValue = value;
-    if (name === 'altura' || name === 'peso') {
-      processedValue = value === '' ? '' : Number(value);
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: processedValue }));
-    validateField(name, processedValue);
-  };
+  const { name, value } = e.target;
+
+  let processedValue = value;
+
+  if (name === 'nome') {
+    // Conforme digita, cada palavra já fica com a primeira maiúscula
+    processedValue = value
+      .split(' ')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  if (name === 'altura' || name === 'peso') {
+    processedValue = value === '' ? '' : Number(value);
+  }
+
+  setFormData(prev => ({ ...prev, [name]: processedValue }));
+  validateField(name, processedValue);
+};
+
+
+const handleNameBlur = () => {
+  if (!formData.nome) return;
+
+  const formatado = formData.nome
+    .split(' ')
+    .filter(Boolean) // Remove espaços extras
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+
+  setFormData(prev => ({ ...prev, nome: formatado }));
+  validateField('nome', formatado);
+};
 
   const validateField = (name, value) => {
     let error = '';
@@ -145,6 +180,8 @@ const ProfilePage = () => {
   };
 
 const handleSave = async () => {
+  console.log("Salvando...");
+
   const hasErrors = Object.keys(errors).some(key => errors[key]);
   if (hasErrors) return toast.error('Corrija os campos inválidos');
 
@@ -159,25 +196,40 @@ const handleSave = async () => {
 
     const objetivoBanco = objetivoMap[formData.objetivo] || null;
 
-    // Mapear campos do frontend para o backend
+    // Campos para enviar no formato esperado pelo backend
     const changes = {
       nome: formData.nome,
       telefone: formData.telefone,
       data_nascimento: formData.dataNascimento,
       genero: formData.genero,
-      altura_cm: Number(formData.altura),
-      peso_kg: Number(formData.peso),
-      id_objetivo: objetivoBanco 
+      altura: Number(formData.altura),
+      peso: Number(formData.peso),
+      id_objetivo: objetivoBanco
     };
 
-    // Adicionar apenas os campos que foram alterados
-    Object.keys(changes).forEach(key => {
-      if (changes[key] !== userData[key] && changes[key] !== undefined) {
-        formDataToSend.append(key, changes[key]);
+    // Mapeamento entre campos frontend (userData) e backend
+    const keyMap = {
+      nome: 'nome',
+      telefone: 'telefone',
+      data_nascimento: 'dataNascimento',
+      genero: 'genero',
+      altura: 'altura',
+      peso: 'peso',
+      id_objetivo: 'objetivo'
+    };
+
+    // Adiciona apenas campos realmente alterados
+    Object.entries(changes).forEach(([backendKey, value]) => {
+      const frontendKey = keyMap[backendKey];
+      const oldVal = userData[frontendKey]?.toString() ?? '';
+      const newVal = value?.toString() ?? '';
+
+      if (oldVal !== newVal && value !== null && value !== undefined && value !== '') {
+        formDataToSend.append(backendKey, value);
       }
     });
 
-    // Tratar a imagem separadamente
+    // Tratar imagem separadamente
     if (formData.foto_perfil && formData.foto_perfil !== userData.foto_perfil) {
       if (formData.foto_perfil.startsWith('data:image')) {
         const blob = await fetch(formData.foto_perfil).then(r => r.blob());
@@ -185,9 +237,16 @@ const handleSave = async () => {
       }
     }
 
+    // Se nenhum dado foi alterado, avisar o usuário
     if (formDataToSend.entries().next().done) {
       toast.info('Nenhuma alteração detectada');
       return;
+    }
+
+    // DEBUG: Mostrar dados que serão enviados
+    console.log('Alterações detectadas:');
+    for (const pair of formDataToSend.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
     }
 
     const token = localStorage.getItem('authToken');
@@ -198,14 +257,14 @@ const handleSave = async () => {
       }
     });
 
-    // Atualizar estado com os novos dados
+    // Atualizar estado com os novos dados vindos do backend
     const updatedUser = {
       ...userData,
       ...response.data.usuarioAtualizado,
       dataNascimento: response.data.usuarioAtualizado.data_nascimento,
-      altura: response.data.usuarioAtualizado.altura_cm,
-      peso: response.data.usuarioAtualizado.peso_kg,
-      objetivo: response.data.usuarioAtualizado.id_objetivo // <<< Atualizando local
+      altura: response.data.usuarioAtualizado.altura,
+      peso: response.data.usuarioAtualizado.peso,
+      objetivo: response.data.usuarioAtualizado.id_objetivo
     };
 
     updateProfile(updatedUser);
@@ -231,6 +290,7 @@ const handleSave = async () => {
     setShowCropper(false);
   };
 
+
   return (
     <Container>
       <Header>
@@ -253,7 +313,8 @@ const handleSave = async () => {
 
       <ProfilePicture>
         <ProfileImage 
-          src={formData.foto_perfil || '/default-avatar.png'} 
+          src={ formData.foto_perfil ? (typeof formData.foto_perfil === 'string' ? formData.foto_perfil 
+          : URL.createObjectURL(formData.foto_perfil)) : '/default-avatar.png'}
           alt="Perfil" 
           isEditing={isEditing}
         />
@@ -294,8 +355,9 @@ const handleSave = async () => {
             <>
               <Input
                 name="nome"
-                value={formData.nome}
+                value={formData.nome || ''}
                 onChange={handleInputChange}
+                onBlur={handleNameBlur}
                 error={errors.nome}
                 bordercolor={AZUL}
               />
@@ -307,16 +369,18 @@ const handleSave = async () => {
         </InputGroup>
 
         <InputGroup>
-          <Label>📱 Telefone</Label>
+          <Label>📱 Telefone Celular</Label>
           {isEditing ? (
             <MaskedInput
               mask="+00 (00) 00000-0000"
-              value={formData.telefone}
-              unmask={false}
-              onAccept={(value) => handleInputChange({ target: { name: 'telefone', value } })}
-              bordercolor={AZUL}
+              value={formData.telefone || ''}
               name="telefone"
-              placeholder="+55 (11) 91234-5678"
+              bordercolor={AZUL}
+              onAccept={(value) => {
+                if (value !== formData.telefone) {
+                  setFormData(prev => ({ ...prev, telefone: value }));
+                }
+              }}
             />
           ) : (
             <ViewModeField>{userData.telefone || 'Não informado'}</ViewModeField>
@@ -338,7 +402,7 @@ const handleSave = async () => {
               bordercolor={AZUL}
             />
           ) : (
-            <ViewModeField>{userData.objetivo || 'Não informado'}</ViewModeField>
+            <ViewModeField>{objetivoTexto[userData.objetivo] || 'Não informado'}</ViewModeField>
           )}
         </InputGroup>
 
@@ -350,7 +414,7 @@ const handleSave = async () => {
             <Input
               type="date"
               name="dataNascimento"
-              value={formData.dataNascimento}
+              value={ isEditing ? (formData.dataNascimento ? formData.dataNascimento.split('/').reverse().join('-') : '') : ''}
               onChange={handleInputChange}
               bordercolor={AZUL}
             />
@@ -367,13 +431,13 @@ const handleSave = async () => {
                 <CompactInput
                   type="number"
                   name="altura"
-                  value={formData.altura}
+                  value={formData.altura || ''}
                   onChange={handleInputChange}
                   error={errors.altura}
                 />
               </UnitWrapper>
             ) : (
-              <ViewModeField>{userData.altura || 'Não informado'}</ViewModeField>
+              <ViewModeField>{userData.altura ? `${parseInt(userData.altura, 10)} cm` : 'Não informado'}</ViewModeField>
             )}
             {errors.altura && <ErrorMessage>{errors.altura}</ErrorMessage>}
           </CompactInputGroup>
@@ -385,13 +449,14 @@ const handleSave = async () => {
                 <CompactInput
                   type="number"
                   name="peso"
-                  value={formData.peso}
+                  value={formData.peso || ''}
                   onChange={handleInputChange}
                   error={errors.peso}
                 />
               </UnitWrapper>
             ) : (
-              <ViewModeField>{userData.peso || 'Não informado'}</ViewModeField>
+              <ViewModeField>{userData.peso ? (Number(userData.peso) % 1 === 0 ? `${parseInt(userData.peso, 10)} kg` 
+              : `${Number(userData.peso).toFixed(3)} kg`) : 'Não informado'} </ViewModeField>
             )}
             {errors.peso && <ErrorMessage>{errors.peso}</ErrorMessage>}
           </CompactInputGroup>
@@ -403,7 +468,7 @@ const handleSave = async () => {
             {isEditing ? (
               <InputWithOptions
                 name="genero"
-                value={formData.genero}
+                value={formData.genero || ''}
                 onChange={handleInputChange}
                 options={['Feminino', 'Masculino', 'Prefiro não informar']}
                 bordercolor={AZUL}

@@ -207,7 +207,6 @@ const handleDeleteTreino = async (id) => {
                     exit={{ opacity: 0 }}
                   >
                     <S.TreinoHeader>
-                      <S.TreinoDate>{formatarData(treino.data_criacao)}</S.TreinoDate>
                       <S.TreinoType tipo={treino.tipo || 'pessoal'}>
                         {treino.tipo?.toUpperCase() || 'PESSOAL'}
                       </S.TreinoType>
