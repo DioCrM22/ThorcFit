@@ -12,12 +12,20 @@ const {
 } = require('../models');
 
 class TreinoController {
-  // Validações para novo plano de treino
   static validatePlano = [
     body('nome')
       .trim()
       .isLength({ min: 2, max: 100 })
       .withMessage('Nome do plano deve ter entre 2 e 100 caracteres'),
+    body('observacoes')
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage('Observações devem ter no máximo 500 caracteres'),
+    body('duracao_estimada')
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage('Duração estimada deve ser um número inteiro positivo'),
     body('exercicios')
       .isArray({ min: 1 })
       .withMessage('Pelo menos um exercício deve ser adicionado'),
@@ -32,60 +40,62 @@ class TreinoController {
       .withMessage('Número de repetições deve estar entre 1 e 100')
   ];
 
-  // Obter planos de treino
+  static mapExerciciosTreino(exercicios) {
+    return exercicios.map(exercicio => ({
+      series: exercicio.ExerciciosDoTreino.series,
+      repeticoes: exercicio.ExerciciosDoTreino.repeticoes,
+      carga: exercicio.ExerciciosDoTreino.carga,
+      tempo_descanso: exercicio.ExerciciosDoTreino.tempo_descanso,
+      observacoes: exercicio.ExerciciosDoTreino.observacoes,
+      ordem: exercicio.ExerciciosDoTreino.ordem,
+      exercicio: {
+        id_exercicio: exercicio.id_exercicio,
+        nome: exercicio.nome,
+        descricao: exercicio.descricao,
+        grupo_muscular: exercicio.grupo_muscular,
+        equipamento_necesario: exercicio.equipamento_necesario,
+        instrucoes: exercicio.instrucoes,
+        gif_url: exercicio.gif_url
+      }
+    })).sort((a, b) => a.ordem - b.ordem);
+  }
+
   static async getPlanos(req, res) {
     try {
       const { status } = req.query;
+      const vinculos = await VinculoTreino.findAll({
+        where: { id_usuario: req.userId, status: 'ativo' },
+        attributes: ['id_personal']
+      });
+      const idPersonais = vinculos.map(v => v.id_personal);
 
       let whereClause = {
         [Op.or]: [
           { id_criador_usuario: req.userId },
-          {
-            id_criador_personal: {
-              [Op.in]: await VinculoTreino.findAll({
-                where: { 
-                  id_usuario: req.userId, 
-                  status: 'ativo' 
-                },
-                attributes: ['id_personal']
-              }).then(vinculos => vinculos.map(v => v.id_personal))
-            }
-          }
+          { id_criador_personal: { [Op.in]: idPersonais } }
         ]
       };
 
-      if (status) {
-        if (status === 'ativo') {
-          whereClause.status = 'ativo';
-        } else if (status === 'inativo') {
-          whereClause.status = 'inativo';
-        }
-      }
+      if (status) whereClause.status = status;
 
       const planosTreino = await PlanoTreino.findAll({
         where: whereClause,
         include: [
           {
             model: Exercicio,
-            as: 'exercicios', // alias correto aqui
-            through: {
-              attributes: ['series', 'repeticoes', 'carga', 'tempo_descanso', 'observacoes', 'ordem']
-            }
+            as: 'exercicios',
+            through: { attributes: ['series', 'repeticoes', 'carga', 'tempo_descanso', 'observacoes', 'ordem'] }
           },
           {
             model: PersonalTrainer,
             as: 'criadorPersonal',
-            include: [{
-              model: Usuario,
-              as: 'usuario',
-              attributes: ['nome']
-            }]
+            include: [{ model: Usuario, as: 'usuario', attributes: ['nome'] }]
           }
         ],
         order: [['data_criacao', 'DESC']]
       });
 
-      const estatisticas = await TreinoController.calcularEstatisticas(req.userId);
+      const estatisticas = await TreinoController.calcularEstatisticas(req.userId, idPersonais);
 
       const exerciciosDisponiveis = await Exercicio.findAll({
         attributes: ['id_exercicio', 'nome', 'grupo_muscular'],
@@ -95,29 +105,17 @@ class TreinoController {
       res.json({
         planos_treino: planosTreino.map(plano => ({
           ...plano.toJSON(),
-          exercicios_treino: plano.exercicios.map(exercicio => ({
-            series: exercicio.ExerciciosDoTreino.series,
-            repeticoes: exercicio.ExerciciosDoTreino.repeticoes,
-            carga: exercicio.ExerciciosDoTreino.carga,
-            tempo_descanso: exercicio.ExerciciosDoTreino.tempo_descanso,
-            observacoes: exercicio.ExerciciosDoTreino.observacoes,
-            ordem: exercicio.ExerciciosDoTreino.ordem,
-            exercicio: {
-              id_exercicio: exercicio.id_exercicio,
-              nome: exercicio.nome,
-              grupo_muscular: exercicio.grupo_muscular,
-            }
-          }))
+          exercicios_treino: TreinoController.mapExerciciosTreino(plano.exercicios)
         })),
         ...estatisticas,
         exercicios_disponiveis: exerciciosDisponiveis
       });
-
     } catch (error) {
       console.error('Erro ao buscar planos de treino:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
+
 
   // Criar novo plano de treino
   static async createPlano(req, res) {
@@ -222,7 +220,7 @@ class TreinoController {
         return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      const temAcesso = await this.verificarAcessoPlano(plano, req.userId);
+      const temAcesso = await TreinoController.verificarAcessoPlano(plano, req.userId);
       if (!temAcesso) {
         return res.status(403).json({ error: 'Acesso negado' });
       }
@@ -337,7 +335,7 @@ class TreinoController {
         return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      const temAcesso = await this.verificarAcessoPlano(planoOriginal, req.userId);
+      const temAcesso = await TreinoController.verificarAcessoPlano(planoOriginal, req.userId);
       if (!temAcesso) {
         return res.status(403).json({ error: 'Acesso negado' });
       }
@@ -423,7 +421,7 @@ class TreinoController {
         return res.status(404).json({ error: 'Plano de treino não encontrado' });
       }
 
-      const temAcesso = await this.verificarAcessoPlano(plano, req.userId);
+      const temAcesso = await TreinoController.verificarAcessoPlano(plano, req.userId);
       if (!temAcesso) {
         return res.status(403).json({ error: 'Acesso negado' });
       }
@@ -467,46 +465,56 @@ class TreinoController {
   }
 
   // Finalizar treino
-  static async finalizarTreino(req, res) {
-    try {
-      const { historico_id, observacoes } = req.body;
+static async finalizarTreino(req, res) {
+  try {
+    const { historico_id, observacoes } = req.body;
 
-      const historico = await HistoricoTreino.findOne({
-        where: {
-          id_historico: historico_id,
-          id_usuario: req.userId
-        }
-      });
-
-      if (!historico) {
-        return res.status(404).json({ error: 'Histórico de treino não encontrado' });
+    const historico = await HistoricoTreino.findOne({
+      where: {
+        id_historico: historico_id,
+        id_usuario: req.userId
       }
+    });
 
-      const horaFim = new Date().toTimeString().split(' ')[0];
-      const horaInicio = historico.hora_inicio;
+    if (!historico) {
+      return res.status(404).json({ error: 'Histórico de treino não encontrado' });
+    }
 
-      const [horaI, minI] = horaInicio.split(':').map(Number);
-      const [horaF, minF] = horaFim.split(':').map(Number);
-      let duracao = (horaF * 60 + minF) - (horaI * 60 + minI);
-      if (duracao < 0) duracao += 24 * 60;
+    const horaFim = new Date().toTimeString().split(' ')[0];
+    const horaInicio = historico.hora_inicio;
 
-      await historico.update({
-        concluido: true,
-        hora_fim: horaFim,
-        duracao,
-        observacoes
-      });
+    const [horaI, minI] = horaInicio.split(':').map(Number);
+    const [horaF, minF] = horaFim.split(':').map(Number);
+    let duracao = (horaF * 60 + minF) - (horaI * 60 + minI);
+    if (duracao < 0) duracao += 24 * 60;
 
-      res.json({
-        success: true,
-        message: 'Treino finalizado com sucesso'
-      });
+    await historico.update({
+      concluido: true,
+      hora_fim: horaFim,
+      duracao_minutos: duracao,
+      observacoes
+    });
 
-    } catch (error) {
-      console.error('Erro ao finalizar treino:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
-    }
-  }
+    // Atualizar array de "realizados" no plano
+    const plano = await PlanoTreino.findByPk(historico.id_plano_treino);
+    const hoje = new Date().toISOString().split('T')[0];
+
+    let realizados = plano.realizados || [];
+    if (!realizados.includes(hoje)) {
+      realizados.push(hoje);
+      await plano.update({ realizados });
+    }
+
+    res.json({
+      success: true,
+      message: 'Treino finalizado com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao finalizar treino:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
 
   // Verificar acesso ao plano
   static async verificarAcessoPlano(plano, userId) {

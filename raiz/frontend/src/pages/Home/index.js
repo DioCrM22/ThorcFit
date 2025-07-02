@@ -1,5 +1,6 @@
 // index.js
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import NavBar from '../../components/NavBar';
 import Sidebar from './SideBar';
@@ -14,7 +15,6 @@ const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 const API_URL = 'http://localhost:3001/api';
 
 const getToken = () => localStorage.getItem('authToken');
-
 const getDiaAbreviado = () => diasSemana[new Date().getDay()];
 
 export default function Home() {
@@ -26,6 +26,7 @@ export default function Home() {
   const [treinosDia, setTreinosDia] = useState([]);
   const [treinoAtivo, setTreinoAtivo] = useState(null);
   const [checkboxes, setCheckboxes] = useState({});
+  const navigate = useNavigate();
 
   const fetchTreinosDoDia = async (diaAbreviado) => {
     const token = getToken();
@@ -37,11 +38,10 @@ export default function Home() {
 
       const treinosArray = Array.isArray(data) ? data : data.planos_treino || [];
 
-      const treinosDoDia = treinosArray.filter(treino => {
-        const dataTreino = new Date(treino.data_criacao);
-        const dia = diasSemana[dataTreino.getDay()];
-        return dia === diaAbreviado && !treino.finalizado;
-      });
+      const treinosDoDia = treinosArray.filter(treino =>
+        (treino.status === 'ativo' || treino.status === 'em-andamento')
+      );
+
 
       setTreinosDia(treinosDoDia);
     } catch (error) {
@@ -87,6 +87,9 @@ export default function Home() {
         grupo_muscular: info?.grupo_muscular || exercicioPlano.exercicio?.grupo_muscular || '',
       };
     });
+    await axios.post(`${API_URL}/treino/iniciar/${treino.id_plano_treino}`, {}, {
+  headers: { Authorization: `Bearer ${getToken()}` }
+});
 
     // 3. Atualiza o estado com o treino ativo
     setTreinoAtivo({ 
@@ -115,37 +118,31 @@ const handleCheckboxChange = async (index) => {
 };
 
 const handleFinalizarTreino = async () => {
-  if (!treinoAtivo) {
-    console.error('Erro: treino ativo não definido');
-    return;
-  }
+  if (!treinoAtivo) return;
 
   try {
-    // 1. Atualiza o estado localmente
     const treinoFinalizado = {
       ...treinoAtivo,
       concluido: true,
       hora_fim: new Date().toISOString(),
-      duracao_minutos: calcularDuracao(treinoAtivo.hora_inicio) // Função auxiliar
+      duracao_minutos: calcularDuracao(treinoAtivo.hora_inicio)
     };
 
-    // 2. Limpa o treino ativo
     setTreinoAtivo(null);
-
-    // 3. Atualiza a lista de treinos do dia
     fetchTreinosDoDia(activeDay);
 
-    // 4. Feedback visual
     alert('Treino finalizado com sucesso!');
 
-    // Opcional: Você pode salvar localmente no localStorage
-    salvarHistoricoLocal(treinoFinalizado);
+    salvarHistoricoLocal(treinoFinalizado);  // <-- usar aqui, por exemplo
+
+    navigate('/ver-treinos');  // Se adicionou navigate para redirecionar
 
   } catch (error) {
     console.error('Erro ao finalizar treino:', error);
     alert('Erro ao finalizar treino');
   }
 };
+
 
 // Funções auxiliares
 const calcularDuracao = (horaInicio) => {

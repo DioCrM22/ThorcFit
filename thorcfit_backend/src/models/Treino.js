@@ -38,53 +38,59 @@ module.exports = (sequelize) => {
     updatedAt: "updated_at",
   });
 
-  const PlanoTreino = sequelize.define("PlanoTreino", {
-    id_plano_treino: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    tipo_criador: {
-      type: DataTypes.ENUM("usuario", "personal"),
-      allowNull: false,
-    },
-    id_criador_usuario: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    id_criador_personal: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    nome: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    descricao: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    data_criacao: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    status: {
-      type: DataTypes.ENUM("ativo", "inativo", "concluido"),
-      allowNull: false,
-      defaultValue: "ativo",
-    },
-    duracao_estimada: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: "Duração em minutos",
-    },
-  }, {
-    tableName: "plano_treino",
-    timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-  });
+const PlanoTreino = sequelize.define("PlanoTreino", {
+  id_plano_treino: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  tipo_criador: {
+    type: DataTypes.ENUM("usuario", "personal"),
+    allowNull: false,
+  },
+  id_criador_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  id_criador_personal: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  nome: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  descricao: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  data_criacao: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
+  status: {
+    type: DataTypes.ENUM("ativo", "inativo", "concluido"),
+    allowNull: false,
+    defaultValue: "ativo",
+  },
+  realizados: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: [],
+    comment: "Datas em que o plano foi concluído",
+  },
+  duracao_estimada: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: "Duração em minutos",
+  },
+}, {
+  tableName: "plano_treino",
+  timestamps: true,
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+});
 
   const ExerciciosDoTreino = sequelize.define("ExerciciosDoTreino", {
     id_treino: {
@@ -128,54 +134,59 @@ module.exports = (sequelize) => {
   });
 
   const HistoricoTreino = sequelize.define("HistoricoTreino", {
-    id_historico: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    id_usuario: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    id_plano_treino: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    data_treino: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-    },
-    hora_inicio: {
-      type: DataTypes.TIME,
-      allowNull: true,
-    },
-    hora_fim: {
-      type: DataTypes.TIME,
-      allowNull: true,
-    },
-    duracao_minutos: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    calorias_queimadas: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    observacoes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    concluido: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
-  }, {
-    tableName: "historico_treino",
-    timestamps: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-  });
+  id_historico: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  id_plano_treino: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  data_treino: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+  },
+  hora_inicio: {
+    type: DataTypes.TIME,
+    allowNull: true,
+  },
+  hora_fim: {
+    type: DataTypes.TIME,
+    allowNull: true,
+  },
+  duracao_minutos: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  calorias_queimadas: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  observacoes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  concluido: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  realizados: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: "Array de datas (ou objetos) em que o plano foi finalizado",
+  },
+}, {
+  tableName: "historico_treino",
+  timestamps: true,
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+});
 
   return {
     Exercicio,

@@ -13,7 +13,7 @@ import VerTreinos from './pages/VerTreinos';
 import Nutricionistas from './pages/Nutricionistas';
 import Treinadores from './pages/Treinadores';                  
 import Alimentacao from './pages/Alimentacao'; 
-
+import DetalhesTreino from './pages/DetalhesTreino';
 function App() {
   return (
     <Routes>
@@ -24,6 +24,7 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/perfil-usuario" element={<PerfilUsuario />} />
       <Route path="/perfil-profissional" element={<PerfilProfissional />} />
+      <Route path="/treino/:id" element={<DetalhesTreino />} />
       
       {/* Rotas adaptadas para vínculos profissionais */}
       <Route path="/solicitar-companheiros" element={<SolicitarCompanheiros />} /> {/* Agora busca profissionais */}
