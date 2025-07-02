@@ -1,7 +1,7 @@
 // Nutricionistas/index.js
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FiSearch, FiActivity, FiTrash2, FiEdit } from 'react-icons/fi';
+import { FiSearch, FiActivity, FiTrash2 } from 'react-icons/fi';
 import NutriSidebar from './Sidebar';
 import EditarRefeicao from './EditarRefeicao';
 import NavBar from '../../components/NavBar';
@@ -17,7 +17,7 @@ const NutricionistasPage = () => {
       id_usuario: 1,
       nome: 'João Santos',
       email: 'joao@exemplo.com',
-      foto_perfil: '/assets/images/default-avatar.png',
+      foto_perfil: 'https://i.pravatar.cc/70?img=12',
       genero: 'masculino',
       numero: '(11) 98765-4321',
       status_treino: 'ativo',
@@ -27,10 +27,6 @@ const NutricionistasPage = () => {
       ]
     }
   ];
-
-  const handleEditarRefeicao = (userId, refeicaoId) => {
-    setPopupRefeicao({ userId, refeicaoId });
-  };
 
   const handleNovaRefeicao = (userId) => {
     setPopupRefeicao({ userId, refeicaoId: null });
@@ -82,9 +78,6 @@ const NutricionistasPage = () => {
                 <S.PlanButton onClick={() => handleNovaRefeicao(atleta.id_usuario)}>
                   <FiActivity /> Nova Refeição
                 </S.PlanButton>
-                <S.HistoryButton onClick={() => handleEditarRefeicao(atleta.id_usuario, atleta.historico_refeicoes[0].id_refeicao)}>
-                  <FiEdit /> Editar
-                </S.HistoryButton>
               </S.ActionGroup>
 
               <S.DeleteButton onClick={() => alert('Excluir...')}>

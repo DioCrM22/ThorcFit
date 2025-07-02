@@ -17,7 +17,7 @@ class ExerciciosController {
 
       // Aplicar filtros
       if (busca) {
-        whereClause.nome = { [Op.iLike]: `%${busca}%` };
+        whereClause.nome = { [Op.like]: `%${busca}%` };
       }
 
       if (grupo_muscular) {
@@ -93,7 +93,7 @@ class ExerciciosController {
 
       const exercicios = await Exercicio.findAll({
         where: {
-          nome: { [Op.iLike]: `%${q.trim()}%` }
+          nome: { [Op.like]: `%${q.trim()}%` }
         },
         attributes: ['id_exercicio', 'nome', 'grupo_muscular'],
         limit: parseInt(limite),
@@ -184,7 +184,7 @@ class ExerciciosController {
 
       // Verificar se já existe exercício com o mesmo nome
       const exercicioExistente = await Exercicio.findOne({
-        where: { nome: { [Op.iLike]: nome.trim() } }
+        where: { nome: { [Op.like]: nome.trim() } }
       });
 
       if (exercicioExistente) {
@@ -241,7 +241,7 @@ class ExerciciosController {
       if (nome && nome.trim() !== exercicio.nome) {
         const exercicioExistente = await Exercicio.findOne({
           where: { 
-            nome: { [Op.iLike]: nome.trim() },
+            nome: { [Op.like]: nome.trim() },
             id_exercicio: { [Op.ne]: id }
           }
         });
@@ -318,4 +318,3 @@ class ExerciciosController {
 }
 
 module.exports = ExerciciosController;
-

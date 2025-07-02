@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiCheck, FiPlus, FiFilter, FiUser, FiHeart } from 'react-icons/fi';
-import NavBar from '../../components/NavBar';
-import api from '../../config/axios';
 import {
   Container,
   Header,
+  BackButton,
   Logo,
   SearchContainer,
   SearchInput,
@@ -18,277 +16,119 @@ import {
   UserInfo,
   ActionGroup,
   AddButton,
+  DeleteButton,
   CheckBadge
 } from './styles';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
+import { FaUserPlus, FaTrashAlt, FaCheck, FaArrowLeft } from 'react-icons/fa';
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
-
-export default function BuscarProfissionaisPage() {
+export default function SolicitarCompanheiros() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('todos');
-  const [profissionais, setProfissionais] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [solicitandoVinculo, setSolicitandoVinculo] = useState({});
+  const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useState('todos');
+  const [solicitados, setSolicitados] = useState(new Set());
 
-  useEffect(() => {
-    carregarProfissionais();
-  }, []);
+  // MOCK com imagens de exemplo
+  const profissionais = [
+  { id: 1, nome: 'João Personal', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=1', vinculado: false },
+  { id: 2, nome: 'Maria Nutricionista', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=2', vinculado: true },
+  { id: 3, nome: 'Pedro Personal', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=3', vinculado: false },
+  { id: 4, nome: 'Ana Silva', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=4', vinculado: false },
+  { id: 5, nome: 'Carlos Souza', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=5', vinculado: true },
+  { id: 6, nome: 'Fernanda Lima', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=6', vinculado: false },
+  { id: 7, nome: 'Lucas Oliveira', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=7', vinculado: false },
+  { id: 8, nome: 'Beatriz Santos', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=8', vinculado: true },
+  { id: 9, nome: 'Rafael Pereira', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=9', vinculado: false },
+  { id: 10, nome: 'Juliana Costa', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=10', vinculado: false },
+  { id: 11, nome: 'Gustavo Martins', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=11', vinculado: true },
+  { id: 12, nome: 'Patrícia Almeida', tipoConta: 'nutricionistas', fotoPerfil: 'https://i.pravatar.cc/70?img=12', vinculado: false },
+  { id: 13, nome: 'André Fernandes', tipoConta: 'personais', fotoPerfil: 'https://i.pravatar.cc/70?img=13', vinculado: false },
+];
 
-  const carregarProfissionais = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/api/user/profissionais');
-      setProfissionais(response.data.profissionais || []);
-    } catch (error) {
-      console.error('Erro ao carregar profissionais:', error);
-    } finally {
-      setLoading(false);
-    }
+
+   const filtrarProfissionais = () => {
+    return profissionais.filter((p) => {
+      const nomeMatch = p.nome.toLowerCase().includes(busca.toLowerCase());
+      const filtroMatch =
+        filtro === 'todos' ||
+        (filtro === 'personais' && p.tipoConta === 'personais') ||
+        (filtro === 'nutricionistas' && p.tipoConta === 'nutricionistas');
+      return nomeMatch && filtroMatch;
+    });
   };
 
-  const solicitarVinculo = async (profissional) => {
-    try {
-      setSolicitandoVinculo(prev => ({ ...prev, [profissional.id_usuario]: true }));
-      
-      const isNutricionista = profissional.nutricionista;
-      const endpoint = isNutricionista ? '/api/vinculos/nutricional' : '/api/vinculos/treino';
-      const idField = isNutricionista ? 'id_nutricionista' : 'id_personal';
-      const idValue = isNutricionista ? profissional.nutricionista.id_nutricionista : profissional.personalTrainer.id_personal;
-
-      await api.post(endpoint, {
-        [idField]: idValue,
-        observacoes: `Solicitação de vínculo com ${isNutricionista ? 'nutricionista' : 'personal trainer'}`
-      });
-
-      alert('Solicitação de vínculo enviada com sucesso!');
-      
-      // Atualizar o estado local para mostrar que o vínculo foi solicitado
-      setProfissionais(prev => prev.map(p => 
-        p.id_usuario === profissional.id_usuario 
-          ? { ...p, vinculo_solicitado: true }
-          : p
-      ));
-      
-    } catch (error) {
-      console.error('Erro ao solicitar vínculo:', error);
-      if (error.response?.status === 409) {
-        alert('Você já possui um vínculo com este profissional.');
-      } else {
-        alert('Erro ao solicitar vínculo. Tente novamente.');
-      }
-    } finally {
-      setSolicitandoVinculo(prev => ({ ...prev, [profissional.id_usuario]: false }));
-    }
-  };
-
-  const filteredProfissionais = profissionais.filter(profissional => {
-    const matchesSearch = profissional.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         profissional.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    let matchesFilter = true;
-    if (filter === 'nutricionistas') {
-      matchesFilter = profissional.nutricionista;
-    } else if (filter === 'treinadores') {
-      matchesFilter = profissional.personalTrainer;
-    }
-    
-    return matchesSearch && matchesFilter;
-  });
-
-  const getTipoProfissional = (profissional) => {
-    if (profissional.nutricionista) return 'Nutricionista';
-    if (profissional.personalTrainer) return 'Personal Trainer';
-    return 'Profissional';
-  };
-
-  const getIconeProfissional = (profissional) => {
-    if (profissional.nutricionista) return <FiHeart size={16} />;
-    if (profissional.personalTrainer) return <FiUser size={16} />;
-    return <FiUser size={16} />;
-  };
-
-  if (loading) {
-    return (
-      <Container>
-        <Header>
-          <NavBar 
-            title="THORC FIT"
-            showBack={true}
-            showMenu={false}
-            onBack={() => navigate('/home')}
-          />
-        </Header>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>Carregando profissionais...</p>
-        </div>
-      </Container>
-    );
+  function toggleSolicitacao(id) {
+    setSolicitados((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
   }
 
   return (
-    <Container
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
+    <Container>
       <Header>
-        <NavBar 
-          title="THORC FIT"
-          showBack={true}
-          showMenu={false}
-          onBack={() => navigate('/home')}
-        />
-        <Logo 
-          src="/assets/images/LogoAmigos.png" 
-          alt="Logo Forte"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        />
+        <BackButton onClick={() => navigate(-1)}>
+          <FaArrowLeft size={22} />
+        </BackButton>
+        <Logo src="/assets/images/logo.png" alt="Logo" />
       </Header>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        <SearchContainer>
-          <SearchInput
-            type="text"
-            placeholder="🔍Buscar profissional por nome ou e-mail..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </SearchContainer>
+      <SearchContainer>
+        <SearchInput
+          placeholder="Buscar por nome"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </SearchContainer>
 
-        <FilterGroup>
-          {[
-            { key: 'todos', label: 'Todos', icon: <FiFilter size={14} /> },
-            { key: 'nutricionistas', label: 'Nutricionistas', icon: <FiHeart size={14} /> },
-            { key: 'treinadores', label: 'Treinadores', icon: <FiUser size={14} /> }
-          ].map((filterType) => (
-            <FilterButton
-              key={filterType.key}
-              active={filter === filterType.key}
-              onClick={() => setFilter(filterType.key)}
-              variants={itemVariants}
-            >
-              {filterType.icon}
-              {' ' + filterType.label}
-            </FilterButton>
-          ))}
-        </FilterGroup>
-
-        {/* Botão para ver vínculos */}
-        <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-          <motion.button
-            onClick={() => navigate('/vinculos-profissionais')}
-            style={{
-              background: '#007bff',
-              color: 'white',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer'
-            }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Ver Meus Vínculos Profissionais
-          </motion.button>
-        </div>
-      </motion.div>
+      <FilterGroup>
+        <FilterButton active={filtro === 'todos'} onClick={() => setFiltro('todos')}>
+          Todos
+        </FilterButton>
+        <FilterButton active={filtro === 'personais'} onClick={() => setFiltro('personais')}>
+          Personais
+        </FilterButton>
+        <FilterButton active={filtro === 'nutricionistas'} onClick={() => setFiltro('nutricionistas')}>
+          Nutricionistas
+        </FilterButton>
+      </FilterGroup>
 
       <UserList>
         <AnimatePresence>
-          {filteredProfissionais.length === 0 ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              style={{ textAlign: 'center', color: '#666' }}
-            >
-              Nenhum profissional encontrado
-            </motion.p>
-          ) : (
-            filteredProfissionais.map((profissional, index) => (
-              <motion.div
-                key={profissional.id_usuario}
-                variants={itemVariants}
-                transition={{ delay: index * 0.1 + 0.4 }}
-              >
-                <UserCard>
-                  {profissional.vinculo_solicitado && (
-                    <CheckBadge>
-                      <FiCheck size={16} />
-                    </CheckBadge>
+          {filtrarProfissionais().map((p) => {
+            const pedidoEnviado = solicitados.has(p.id);
+            return (
+              <UserCard key={p.id}>
+                <UserImage src={p.fotoPerfil} alt={`${p.nome} foto`} />
+                <UserInfo>
+                  <h4>{p.nome}</h4>
+                  <p>{p.tipoConta.charAt(0).toUpperCase() + p.tipoConta.slice(1)}</p>
+                </UserInfo>
+                <ActionGroup>
+                  {pedidoEnviado ? (
+                    <DeleteButton onClick={() => toggleSolicitacao(p.id)} whileTap={{ scale: 0.95 }}>
+                      <FaTrashAlt size={14} />
+                      Remover
+                    </DeleteButton>
+                  ) : (
+                    <AddButton onClick={() => toggleSolicitacao(p.id)} whileTap={{ scale: 0.95 }}>
+                      <FaUserPlus size={14} />
+                      Adicionar
+                    </AddButton>
                   )}
-                  
-                  <UserImage src={profissional.foto_perfil || '/assets/images/default-avatar.png'} alt={profissional.nome} />
-                  
-                  <UserInfo>
-                    <h4>{getIconeProfissional(profissional)} {profissional.nome}</h4>
-                    <p>📧 {profissional.email}</p>
-                    {profissional.telefone && <p>📱 {profissional.telefone}</p>}
-                    <p><strong>{getTipoProfissional(profissional)}</strong></p>
-                    
-                    {/* Informações específicas do profissional */}
-                    {profissional.nutricionista?.especialidade && (
-                      <p><small>Especialidade: {profissional.nutricionista.especialidade}</small></p>
-                    )}
-                    {profissional.personalTrainer?.especialidade && (
-                      <p><small>Especialidade: {profissional.personalTrainer.especialidade}</small></p>
-                    )}
-                    
-                    {profissional.nutricionista?.preco_consulta && (
-                      <p><small>R$ {parseFloat(profissional.nutricionista.preco_consulta).toFixed(2)} / consulta</small></p>
-                    )}
-                    {profissional.personalTrainer?.preco_sessao && (
-                      <p><small>R$ {parseFloat(profissional.personalTrainer.preco_sessao).toFixed(2)} / sessão</small></p>
-                    )}
-                  </UserInfo>
-
-                  <ActionGroup>
-                    {profissional.vinculo_solicitado ? (
-                      <CheckBadge style={{ position: 'relative', background: '#28a745' }}>
-                        <FiCheck /> Solicitado
-                      </CheckBadge>
-                    ) : (
-                      <AddButton
-                        onClick={() => solicitarVinculo(profissional)}
-                        disabled={solicitandoVinculo[profissional.id_usuario]}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {solicitandoVinculo[profissional.id_usuario] ? (
-                          'Enviando...'
-                        ) : (
-                          <>
-                            <FiPlus /> Solicitar Vínculo
-                          </>
-                        )}
-                      </AddButton>
-                    )}
-                  </ActionGroup>
-                </UserCard>
-              </motion.div>
-            ))
-          )}
+                </ActionGroup>
+                {pedidoEnviado && (
+                  <CheckBadge style={{ backgroundColor: '#2196F3', color: 'white' }}>
+                    <FaCheck size={12} />
+                  </CheckBadge>
+                )}
+              </UserCard>
+            );
+          })}
         </AnimatePresence>
       </UserList>
     </Container>
   );
 }
-

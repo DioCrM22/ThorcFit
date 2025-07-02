@@ -13,7 +13,7 @@ class AlimentosController {
 
       const alimentos = await Alimento.findAll({
         where: {
-          nome: { [Op.iLike]: `%${q.trim()}%` }
+          nome: { [Op.like]: `%${q.trim()}%` }
         },
         attributes: [
           'id_alimento',
@@ -39,7 +39,7 @@ class AlimentosController {
   }
 
   // Listar alimentos com filtros
-  static async getAlimentos(req, res) {
+static async getAlimentos(req, res) {
     try {
       const { 
         busca, 
@@ -52,18 +52,33 @@ class AlimentosController {
       const offset = (pagina - 1) * limite;
       const whereClause = {};
 
-      // Aplicar filtro de busca
       if (busca) {
-        whereClause.nome = { [Op.iLike]: `%${busca}%` };
+        whereClause.nome = { [Op.like]: `%${busca}%` };
       }
 
-      // Validar campo de ordenação
-      const camposValidos = ['nome', 'calorias', 'proteinas', 'carboidratos', 'gorduras'];
+      const camposValidos = [
+        'nome', 'calorias', 'proteinas', 
+        'carboidratos', 'gorduras', 'fibras',
+        'unidade_medida', 'created_at'
+      ];
+      
       const campoOrdenacao = camposValidos.includes(ordenar_por) ? ordenar_por : 'nome';
       const direcaoOrdem = ordem.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
       const { count, rows: alimentos } = await Alimento.findAndCountAll({
         where: whereClause,
+        attributes: [
+          'id_alimento',
+          'nome',
+          'unidade_medida',
+          'calorias',
+          'proteinas',
+          'carboidratos',
+          'gorduras',
+          'fibras',
+          'created_at',
+          'updated_at'
+        ],
         limit: parseInt(limite),
         offset,
         order: [[campoOrdenacao, direcaoOrdem]]
@@ -84,10 +99,11 @@ class AlimentosController {
     } catch (error) {
       console.error('Erro ao buscar alimentos:', error);
       res.status(500).json({
-        error: 'Erro interno do servidor'
+        error: 'Erro interno do servidor',
+        details: error.message
       });
     }
-  }
+}
 
   // Obter alimento específico
   static async getAlimento(req, res) {
@@ -140,7 +156,7 @@ class AlimentosController {
 
       // Verificar se já existe alimento com o mesmo nome
       const alimentoExistente = await Alimento.findOne({
-        where: { nome: { [Op.iLike]: nome.trim() } }
+        where: { nome: { [Op.like]: nome.trim() } }
       });
 
       if (alimentoExistente) {
@@ -199,7 +215,7 @@ class AlimentosController {
       if (nome && nome.trim() !== alimento.nome) {
         const alimentoExistente = await Alimento.findOne({
           where: { 
-            nome: { [Op.iLike]: nome.trim() },
+            nome: { [Op.like]: nome.trim() },
             id_alimento: { [Op.ne]: id }
           }
         });
@@ -409,7 +425,7 @@ class AlimentosController {
         try {
           // Verificar se já existe
           const existente = await Alimento.findOne({
-            where: { nome: { [Op.iLike]: alimentoData.nome.trim() } }
+            where: { nome: { [Op.like]: alimentoData.nome.trim() } }
           });
 
           if (existente) {
@@ -458,4 +474,3 @@ class AlimentosController {
 }
 
 module.exports = AlimentosController;
-

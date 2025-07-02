@@ -13,7 +13,7 @@ router.get('/buscar',
 );
 
 // Listar alimentos com filtros
-router.get('/',
+router.get('/listar',
   AlimentosController.getAlimentos
 );
 
@@ -33,7 +33,7 @@ router.get('/admin/estatisticas',
 );
 
 // Criar novo alimento
-router.post('/',
+router.post('/createalimento',
   AlimentosController.createAlimento
 );
 
@@ -53,4 +53,3 @@ router.post('/importar',
 );
 
 module.exports = router;
-

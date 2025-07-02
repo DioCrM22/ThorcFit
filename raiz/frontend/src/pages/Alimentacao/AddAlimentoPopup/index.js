@@ -1,227 +1,176 @@
 // src/pages/Alimentacao/AddAlimentoPopup/index.js
 import React, { useState, useEffect } from 'react';
 import * as S from './styles';
-import { FiPlusCircle, FiSearch } from 'react-icons/fi';
+import { FiPlusCircle } from 'react-icons/fi';
 import CadastroAlimentoPopup from '../CadastroAlimentoPopup';
 
-const AddAlimentoPopup = ({ isOpen, onClose, onSave, mealId }) => {
+const API_URL = 'http://localhost:3001/api/alimentos';
+
+export default function AddAlimentoPopup({ isOpen, onClose, onSave, mealId }) {
   const [alimentos, setAlimentos] = useState([]);
-  const [selectedAlimento, setSelectedAlimento] = useState(null);
+  const [selectedAlimento, setSelectedAlimento] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [porcao, setPorcao] = useState('g');
   const [showCadastro, setShowCadastro] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredAlimentos, setFilteredAlimentos] = useState([]);
 
-  // Carregar alimentos do backend
+  const getToken = () => localStorage.getItem('authToken');
+
   useEffect(() => {
-    const loadAlimentos = async () => {
-      if (!isOpen) return;
+    if (!isOpen) return;
 
+    const fetchAlimentos = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await fetch('http://localhost:3001/api/alimentacao/alimentos', {
+        const response = await fetch(API_URL, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${getToken()}`
           }
         });
 
-        if (response.ok) {
-          const alimentosData = await response.json();
-          setAlimentos(alimentosData);
-          setFilteredAlimentos(alimentosData);
-        } else {
-          console.error('Erro ao carregar alimentos');
-          // Fallback para dados mock se a API falhar
-          const mockAlimentos = [
-            { id_alimento: 1, nome: 'Ovo', calorias: 70, proteinas: 6, carboidratos: 0.6, gorduras: 5, porcao_padrao: 'unidade' },
-            { id_alimento: 2, nome: 'Arroz Integral', calorias: 110, proteinas: 2.6, carboidratos: 22, gorduras: 0.9, porcao_padrao: 'g' },
-            { id_alimento: 3, nome: 'Frango Grelhado', calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6, porcao_padrao: 'g' },
-            { id_alimento: 4, nome: 'Banana', calorias: 89, proteinas: 1.1, carboidratos: 23, gorduras: 0.3, porcao_padrao: 'unidade' },
-            { id_alimento: 5, nome: 'Aveia', calorias: 389, proteinas: 16.9, carboidratos: 66.3, gorduras: 6.9, porcao_padrao: 'g' }
-          ];
-          setAlimentos(mockAlimentos);
-          setFilteredAlimentos(mockAlimentos);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar alimentos');
         }
-      } catch (err) {
-        console.error('Erro ao carregar alimentos:', err);
+
+        const data = await response.json();
+        setAlimentos(data.alimentos || []);
+      } catch (error) {
+        console.error(error.message);
+        alert('Erro ao carregar alimentos. Verifique a conexão ou token.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadAlimentos();
+    fetchAlimentos();
   }, [isOpen]);
-
-  // Filtrar alimentos baseado na busca
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredAlimentos(alimentos);
-    } else {
-      const filtered = alimentos.filter(alimento =>
-        alimento.nome.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredAlimentos(filtered);
-    }
-  }, [searchTerm, alimentos]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedAlimento || !quantidade) return;
-
-    const alimentoSelecionado = alimentos.find(a => a.id_alimento === parseInt(selectedAlimento));
-    
-    // Calcular valores nutricionais baseados na quantidade
-    const fatorMultiplicacao = parseFloat(quantidade) / 100; // Assumindo valores por 100g
-    
-    const newFood = {
-      id_alimento: alimentoSelecionado.id_alimento,
-      nome: alimentoSelecionado.nome,
-      quantidade: parseFloat(quantidade),
-      porcao: porcao,
-      calorias: Math.round(alimentoSelecionado.calorias * fatorMultiplicacao),
-      proteinas: parseFloat((alimentoSelecionado.proteinas * fatorMultiplicacao).toFixed(1)),
-      carboidratos: parseFloat((alimentoSelecionado.carboidratos * fatorMultiplicacao).toFixed(1)),
-      gorduras: parseFloat((alimentoSelecionado.gorduras * fatorMultiplicacao).toFixed(1))
-    };
-
-    onSave(newFood);
-    
-    // Limpar formulário
-    setSelectedAlimento(null);
-    setQuantidade('');
-    setPorcao('g');
-    setSearchTerm('');
-    onClose();
-  };
-
-  const handleNovoAlimento = () => {
-    setShowCadastro(true);
-  };
-
-  const handleAlimentoCadastrado = (newAlimento) => {
-    setShowCadastro(false);
-    setAlimentos(prev => [...prev, newAlimento]);
-    setFilteredAlimentos(prev => [...prev, newAlimento]);
-    setSelectedAlimento(newAlimento.id_alimento.toString());
-  };
-
-  const handleAlimentoSelect = (alimentoId) => {
-    setSelectedAlimento(alimentoId);
-    const alimento = alimentos.find(a => a.id_alimento === parseInt(alimentoId));
-    if (alimento && alimento.porcao_padrao) {
-      setPorcao(alimento.porcao_padrao);
-    }
-  };
 
   if (!isOpen) return null;
 
-  const alimentoSelecionado = selectedAlimento ? 
-    alimentos.find(a => a.id_alimento === parseInt(selectedAlimento)) : null;
+  const alimentoObj = alimentos.find(a => a.id_alimento === +selectedAlimento);
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    if (!alimentoObj || !quantidade) return;
+
+    const fator = parseFloat(quantidade) / 100;
+    const newFood = {
+      id_alimento: alimentoObj.id_alimento,
+      nome: alimentoObj.nome,
+      quantidade: parseFloat(quantidade),
+      porcao,
+      calorias: Math.round(alimentoObj.calorias * fator),
+      proteinas: +(alimentoObj.proteinas * fator).toFixed(1),
+      carboidratos: +(alimentoObj.carboidratos * fator).toFixed(1),
+      gorduras: +(alimentoObj.gorduras * fator).toFixed(1)
+    };
+
+    onSave(newFood);
+
+    setSelectedAlimento('');
+    setQuantidade('');
+    setPorcao('g');
+    onClose();
+  };
+
+  const handleNovoAlimento = () => setShowCadastro(true);
+
+  const handleAlimentoCadastrado = novo => {
+    const novoComId = { ...novo, id_alimento: Date.now() };
+    const updated = [...alimentos, novoComId];
+    setAlimentos(updated);
+    setSelectedAlimento(novoComId.id_alimento.toString());
+    setShowCadastro(false);
+  };
 
   return (
     <>
       <S.Overlay>
         <S.Modal>
-          <S.Bubble />
-          <S.Bubble />
-          
+          <S.Bubble /><S.Bubble />
           <S.Header>
             <h2>Adicionar Alimento</h2>
             <S.CloseButton onClick={onClose}>✕</S.CloseButton>
           </S.Header>
-          
+
           <S.Form onSubmit={handleSubmit}>
-            <div style={{ maxHeight: 'calc(60vh - 180px)', overflowY: 'auto', paddingRight: '8px' }}>
-              
-              {/* Campo de busca */}
-              <S.InputContainer>
-                <S.Label>Buscar Alimento</S.Label>
-                <S.InputWrapper>
-                  <FiSearch style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
-                  <S.Input
-                    type="text"
-                    placeholder="Digite o nome do alimento..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ paddingLeft: '40px' }}
-                  />
-                </S.InputWrapper>
-              </S.InputContainer>
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
+              {loading ? (
+                <p>Carregando alimentos...</p>
+              ) : (
+                <>
+                  <S.InputContainer>
+                    <S.Label>Alimento</S.Label>
+                    <S.InputWrapper>
+                      <S.Select
+                        value={selectedAlimento}
+                        onChange={e => {
+                          setSelectedAlimento(e.target.value);
+                          const a = alimentos.find(x => x.id_alimento === +e.target.value);
+                          setPorcao(a?.unidade_medida || 'g');
+                        }}
+                        required
+                      >
+                        <option value="">Selecione um alimento</option>
+                        {alimentos.map(a => (
+                          <option key={a.id_alimento} value={a.id_alimento}>
+                            {a.nome} ({Math.round(a.calorias)} kcal/100{a.unidade_medida})
+                          </option>
+                        ))}
+                      </S.Select>
+                    </S.InputWrapper>
+                  </S.InputContainer>
 
-              <S.InputContainer>
-                <S.Label>Alimento</S.Label>
-                <S.InputWrapper>
-                  <S.Select 
-                    value={selectedAlimento || ''} 
-                    onChange={e => handleAlimentoSelect(e.target.value)} 
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">
-                      {loading ? 'Carregando...' : 'Selecione um alimento'}
-                    </option>
-                    {filteredAlimentos.map((a) => (
-                      <option key={a.id_alimento} value={a.id_alimento}>
-                        {a.nome} ({Math.round(a.calorias)} kcal/100g)
-                      </option>
-                    ))}
-                  </S.Select>
-                </S.InputWrapper>
-              </S.InputContainer>
+                  <S.InputContainer>
+                    <S.Label>Quantidade</S.Label>
+                    <S.InputWrapper>
+                      <S.Input
+                        type="number"
+                        value={quantidade}
+                        onChange={e => setQuantidade(e.target.value)}
+                        min="1"
+                        step="0.1"
+                        hasUnit
+                        required
+                      />
+                      <S.Select
+                        value={porcao}
+                        onChange={e => setPorcao(e.target.value)}
+                        style={{ width: 80, marginLeft: 8 }}
+                      >
+                        <option value="g">g</option>
+                        <option value="ml">ml</option>
+                        <option value="unidade">un</option>
+                        <option value="colher">colher</option>
+                        <option value="xícara">xícara</option>
+                      </S.Select>
+                    </S.InputWrapper>
+                  </S.InputContainer>
 
-              <S.InputContainer>
-                <S.Label htmlFor="quantidade">Quantidade</S.Label>
-                <S.InputWrapper>
-                  <S.Input
-                    type="number"
-                    id="quantidade"
-                    value={quantidade}
-                    onChange={(e) => setQuantidade(e.target.value)}
-                    min="1"
-                    step="0.1"
-                    required
-                    hasUnit
-                  />
-                  <S.Select 
-                    value={porcao} 
-                    onChange={e => setPorcao(e.target.value)}
-                    style={{ width: '80px', marginLeft: '8px' }}
-                  >
-                    <option value="g">g</option>
-                    <option value="ml">ml</option>
-                    <option value="unidade">un</option>
-                    <option value="colher">colher</option>
-                    <option value="xícara">xícara</option>
-                  </S.Select>
-                </S.InputWrapper>
-              </S.InputContainer>
-
-              {/* Preview nutricional */}
-              {alimentoSelecionado && quantidade && (
-                <S.InputContainer>
-                  <S.Label>Preview Nutricional</S.Label>
-                  <div style={{ 
-                    background: '#f8f9fa', 
-                    padding: '12px', 
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}>
-                    <div>Calorias: {Math.round(alimentoSelecionado.calorias * (quantidade / 100))} kcal</div>
-                    <div>Proteínas: {(alimentoSelecionado.proteinas * (quantidade / 100)).toFixed(1)}g</div>
-                    <div>Carboidratos: {(alimentoSelecionado.carboidratos * (quantidade / 100)).toFixed(1)}g</div>
-                    <div>Gorduras: {(alimentoSelecionado.gorduras * (quantidade / 100)).toFixed(1)}g</div>
-                  </div>
-                </S.InputContainer>
+                  {alimentoObj && quantidade && (
+                    <S.InputContainer>
+                      <S.Label>Preview Nutricional</S.Label>
+                      <div style={{
+                        background: '#f8f9fa',
+                        padding: 12,
+                        borderRadius: 8,
+                        fontSize: 14
+                      }}>
+                        <div>Calorias: {Math.round(alimentoObj.calorias * (quantidade / 100))} kcal</div>
+                        <div>Proteínas: {(alimentoObj.proteinas * (quantidade / 100)).toFixed(1)}g</div>
+                        <div>Carboidratos: {(alimentoObj.carboidratos * (quantidade / 100)).toFixed(1)}g</div>
+                        <div>Gorduras: {(alimentoObj.gorduras * (quantidade / 100)).toFixed(1)}g</div>
+                      </div>
+                    </S.InputContainer>
+                  )}
+                </>
               )}
             </div>
-            
-            <S.ButtonGroup>
-              <S.PrimaryButton type="submit" disabled={!selectedAlimento || !quantidade}>
-                <FiPlusCircle />Adicionar
-              </S.PrimaryButton>
 
+            <S.ButtonGroup>
+              <S.PrimaryButton type="submit" disabled={!alimentoObj || !quantidade}>
+                <FiPlusCircle /> Adicionar
+              </S.PrimaryButton>
               <S.SecondaryButton type="button" onClick={handleNovoAlimento}>
                 🍰 Novo Alimento
               </S.SecondaryButton>
@@ -239,6 +188,4 @@ const AddAlimentoPopup = ({ isOpen, onClose, onSave, mealId }) => {
       )}
     </>
   );
-};
-
-export default AddAlimentoPopup;
+}

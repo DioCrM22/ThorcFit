@@ -147,7 +147,7 @@ class AlimentacaoController {
       for (const alimentoData of alimentos) {
         // Buscar ou criar alimento
         let alimento = await Alimento.findOne({
-          where: { nome: { [Op.iLike]: alimentoData.nome.trim() } }
+          where: { nome: { [Op.like]: alimentoData.nome.trim() } }
         });
 
         if (!alimento) {
@@ -414,4 +414,3 @@ class AlimentacaoController {
 }
 
 module.exports = AlimentacaoController;
-

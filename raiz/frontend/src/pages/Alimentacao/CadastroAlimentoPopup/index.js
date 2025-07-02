@@ -24,11 +24,34 @@ const CadastroAlimentoPopup = ({ isOpen, onClose, onSave }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(form);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const token = localStorage.getItem('authToken');
+
+    const response = await fetch('http://localhost:3001/api/alimentos/createalimento', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // ✅ cabeçalho com o token
+      },
+      body: JSON.stringify(form),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error || 'Erro ao cadastrar alimento');
+    }
+
+    const data = await response.json();
+    onSave(data); // caso queira atualizar o estado com o alimento criado
     onClose();
-  };
+  } catch (error) {
+    console.error('Erro ao salvar alimento:', error.message);
+    alert('Erro ao salvar alimento. Verifique os dados ou tente novamente.');
+  }
+};
 
   if (!isOpen) return null;
 

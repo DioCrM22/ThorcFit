@@ -10,43 +10,41 @@ export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [imageSrc, setImageSrc] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails] = useState(null);
 
   useEffect(() => {
   if (user?.id) {
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-    if (user.metodo_login === 'google') {
-      setImageSrc(user.foto_perfil || "/assets/images/default-avatar.png");
-    } else if (user.foto_perfil?.startsWith('data:image')) {
-      // Foto do banco no formato Base64 já pronta
+    console.log('Loading profile picture for user:', user.id);
+    
+     if (user.foto_perfil?.startsWith('data:image')) {
+      console.log('Base64 image detected in user object');
       setImageSrc(user.foto_perfil);
-    } else {
-      // Caso ainda precise buscar no back-end
-      axios
-        .get(`${API_URL}/api/foto-perfil-base64/${user.id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        })
-        .then((res) => {
-          if (res.data?.image?.startsWith('data:image')) {
-            setImageSrc(res.data.image);
-          } else {
-            setImageSrc("/assets/images/default-avatar.png");
-          }
-        })
-        .catch(() => setImageSrc("/assets/images/default-avatar.png"));
-    }
-
-    axios
-      .get(`${API_URL}/api/usuario-detalhes/${user.id}`, {
+    } 
+    else {
+      console.log('Fetching profile picture from API');
+      axios.get(`${API_URL}/api/foto-perfil-base64/${user.id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       })
-      .then((response) => setUserDetails(response.data))
-      .catch((error) => console.error('Erro ao buscar detalhes:', error));
+      .then((res) => {
+        console.log('Profile picture API response:', res.data);
+        if (res.data?.image?.startsWith('data:image')) {
+          setImageSrc(res.data.image);
+        } else {
+          console.warn('Invalid image format, using default');
+          setImageSrc("/assets/images/default-avatar.png");
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching profile picture:', error);
+        setImageSrc("/assets/images/default-avatar.png");
+      });
+    }
+  } else {
+    console.warn('No user ID available, cannot load profile picture');
   }
 }, [user]);
 
