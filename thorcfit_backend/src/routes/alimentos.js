@@ -13,7 +13,7 @@ router.get('/buscar',
 );
 
 // Listar alimentos com filtros
-router.get('/listar',
+router.get('/',
   AlimentosController.getAlimentos
 );
 
