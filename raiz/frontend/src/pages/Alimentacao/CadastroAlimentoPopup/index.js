@@ -24,34 +24,69 @@ const CadastroAlimentoPopup = ({ isOpen, onClose, onSave }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Função para normalizar números ou usar zero caso inválido
+  const toNumberOrZero = (val) => {
+    const n = Number(val);
+    return isNaN(n) ? 0 : n;
+  };
+
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const token = localStorage.getItem('authToken');
+    // Converte os campos numéricos para number
+    const parsedForm = {
+      ...form,
+      calorias: parseFloat(form.calorias) || 0,
+      proteinas: parseFloat(form.proteinas) || 0,
+      carboidratos: parseFloat(form.carboidratos) || 0,
+      gorduras: parseFloat(form.gorduras) || 0,
+    };
 
-    const response = await fetch('http://localhost:3001/api/alimentos/createalimento', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, // ✅ cabeçalho com o token
-      },
-      body: JSON.stringify(form),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || 'Erro ao cadastrar alimento');
+    if (
+      isNaN(parsedForm.calorias) ||
+      isNaN(parsedForm.proteinas) ||
+      isNaN(parsedForm.carboidratos) ||
+      isNaN(parsedForm.gorduras)
+    ) {
+      alert('Por favor, preencha corretamente os campos numéricos.');
+      return; // evita envio com dados inválidos
     }
 
-    const data = await response.json();
-    onSave(data); // caso queira atualizar o estado com o alimento criado
-    onClose();
-  } catch (error) {
-    console.error('Erro ao salvar alimento:', error.message);
-    alert('Erro ao salvar alimento. Verifique os dados ou tente novamente.');
-  }
-};
+    try {
+      const token = localStorage.getItem('authToken');
+
+      const response = await fetch('http://localhost:3001/api/alimentos/createalimento', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // ✅ cabeçalho com o token
+        },
+        body: JSON.stringify(parsedForm),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Erro ao cadastrar alimento');
+      }
+
+      const data = await response.json();
+
+      // Normaliza os valores numéricos recebidos antes de enviar para onSave
+      const alimentoNormalizado = {
+        ...data.alimento,
+        calorias: toNumberOrZero(data.alimento.calorias),
+        proteinas: toNumberOrZero(data.alimento.proteinas),
+        carboidratos: toNumberOrZero(data.alimento.carboidratos),
+        gorduras: toNumberOrZero(data.alimento.gorduras),
+      };
+
+      onSave(alimentoNormalizado);
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar alimento:', error.message);
+      alert('Erro ao salvar alimento. Verifique os dados ou tente novamente.');
+    }
+  };
 
   if (!isOpen) return null;
 

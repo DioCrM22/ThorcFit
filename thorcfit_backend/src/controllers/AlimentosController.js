@@ -131,7 +131,7 @@ static async getAlimentos(req, res) {
   // Criar novo alimento
   static async createAlimento(req, res) {
     try {
-      const {
+      let {
         nome,
         calorias,
         proteinas,
@@ -141,10 +141,17 @@ static async getAlimentos(req, res) {
         porcao_padrao
       } = req.body;
 
+      // Converter strings para número
+      calorias = parseFloat(calorias);
+      proteinas = proteinas ? parseFloat(proteinas) : 0;
+      carboidratos = carboidratos ? parseFloat(carboidratos) : 0;
+      gorduras = gorduras ? parseFloat(gorduras) : 0;
+      fibras = fibras ? parseFloat(fibras) : 0;
+
       // Validações básicas
-      if (!nome || calorias === undefined) {
+      if (!nome || isNaN(calorias)) {
         return res.status(400).json({
-          error: 'Nome e calorias são obrigatórios'
+          error: 'Nome e calorias são obrigatórios e devem ser numéricos'
         });
       }
 
@@ -167,11 +174,11 @@ static async getAlimentos(req, res) {
 
       const novoAlimento = await Alimento.create({
         nome: nome.trim(),
-        calorias: parseFloat(calorias),
-        proteinas: proteinas ? parseFloat(proteinas) : 0,
-        carboidratos: carboidratos ? parseFloat(carboidratos) : 0,
-        gorduras: gorduras ? parseFloat(gorduras) : 0,
-        fibras: fibras ? parseFloat(fibras) : 0,
+        calorias,
+        proteinas,
+        carboidratos,
+        gorduras,
+        fibras,
         porcao_padrao: porcao_padrao || '100g'
       });
 
@@ -188,6 +195,7 @@ static async getAlimentos(req, res) {
       });
     }
   }
+
 
   // Atualizar alimento
   static async updateAlimento(req, res) {
