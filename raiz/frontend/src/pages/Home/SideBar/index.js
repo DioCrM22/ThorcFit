@@ -13,38 +13,30 @@ export default function Sidebar({ open, onClose }) {
   const [userDetails] = useState(null);
 
   useEffect(() => {
-  if (user?.id) {
+  if (user?.id_usuario || user?.id) {
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-    console.log('Loading profile picture for user:', user.id);
-    
-     if (user.foto_perfil?.startsWith('data:image')) {
-      console.log('Base64 image detected in user object');
+    if (user?.foto_perfil?.startsWith('data:image')) {
       setImageSrc(user.foto_perfil);
-    } 
-    else {
-      console.log('Fetching profile picture from API');
-      axios.get(`${API_URL}/api/foto-perfil-base64/${user.id}`, {
+    } else {
+      axios.get(`${API_URL}/api/usuario/${user.id_usuario || user.id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       })
       .then((res) => {
-        console.log('Profile picture API response:', res.data);
-        if (res.data?.image?.startsWith('data:image')) {
-          setImageSrc(res.data.image);
+        const base64Image = res.data?.usuario?.foto_perfil;
+        if (base64Image?.startsWith('data:image')) {
+          setImageSrc(base64Image);
         } else {
-          console.warn('Invalid image format, using default');
           setImageSrc("/assets/images/default-avatar.png");
         }
       })
       .catch((error) => {
-        console.error('Error fetching profile picture:', error);
+        console.error('Erro ao carregar imagem de perfil:', error);
         setImageSrc("/assets/images/default-avatar.png");
       });
     }
-  } else {
-    console.warn('No user ID available, cannot load profile picture');
   }
 }, [user]);
 

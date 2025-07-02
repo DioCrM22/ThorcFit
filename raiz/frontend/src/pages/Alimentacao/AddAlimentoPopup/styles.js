@@ -185,8 +185,8 @@ export const InputWrapper = styled.div`
 
 export const Unit = styled.span`
   position: absolute;
-  right: 1rem;
-  color: #666;
+  right: 2.5rem;
+  color: black;
   font-weight: 500;
   font-size: 0.9rem;
   pointer-events: none;

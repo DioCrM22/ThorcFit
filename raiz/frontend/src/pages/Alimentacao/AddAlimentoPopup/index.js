@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:3001/api/alimentos';
 
 export default function AddAlimentoPopup({ isOpen, onClose, onSave, mealId }) {
   const [alimentos, setAlimentos] = useState([]);
-  const [selectedAlimento, setSelectedAlimento] = useState('');
+  const [selectedAlimento, setSelectedAlimento] = useState(null);
   const [quantidade, setQuantidade] = useState('');
   const [porcao, setPorcao] = useState('g');
   const [showCadastro, setShowCadastro] = useState(false);
@@ -105,9 +105,10 @@ export default function AddAlimentoPopup({ isOpen, onClose, onSave, mealId }) {
                       <S.Select
                         value={selectedAlimento}
                         onChange={e => {
-                          setSelectedAlimento(e.target.value);
-                          const a = alimentos.find(x => x.id_alimento === +e.target.value);
-                          setPorcao(a?.unidade_medida || 'g');
+                          const id = Number(e.target.value);
+                          const alimentoSelecionado = alimentos.find(x => x.id_alimento === id);
+                          setSelectedAlimento(id);
+                          setPorcao(alimentoSelecionado?.unidade_medida || 'g');
                         }}
                         required
                       >
@@ -121,6 +122,18 @@ export default function AddAlimentoPopup({ isOpen, onClose, onSave, mealId }) {
                     </S.InputWrapper>
                   </S.InputContainer>
 
+                    {selectedAlimento && alimentoObj && (
+                      <S.InputContainer>
+                        <S.Label>Selecionado</S.Label>
+                        <S.InputWrapper>
+                          <S.Input
+                            type="text"
+                            value={`${alimentoObj.nome} (${Math.round(alimentoObj.calorias)} kcal/100${alimentoObj.unidade_medida})`}
+                            readOnly
+                          />
+                        </S.InputWrapper>
+                      </S.InputContainer>
+                    )}
                   <S.InputContainer>
                     <S.Label>Quantidade</S.Label>
                     <S.InputWrapper>
@@ -133,16 +146,17 @@ export default function AddAlimentoPopup({ isOpen, onClose, onSave, mealId }) {
                         hasUnit
                         required
                       />
+                      <S.Unit>{porcao}</S.Unit>
                       <S.Select
                         value={porcao}
                         onChange={e => setPorcao(e.target.value)}
-                        style={{ width: 80, marginLeft: 8 }}
+                        style={{ width: 100, marginLeft: 8 }}
                       >
-                        <option value="g">g</option>
-                        <option value="ml">ml</option>
-                        <option value="unidade">un</option>
-                        <option value="colher">colher</option>
-                        <option value="xícara">xícara</option>
+                        <option value="g">g - gramas</option>
+                        <option value="ml">ml - mililitros</option>
+                        <option value="uni">uni - unidade</option>
+                        <option value="col">col - colher</option>
+                        <option value="xíc">xíc - xícara</option>
                       </S.Select>
                     </S.InputWrapper>
                   </S.InputContainer>

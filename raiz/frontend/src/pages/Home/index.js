@@ -5,11 +5,12 @@ import axios from 'axios';
 import NavBar from '../../components/NavBar';
 import Sidebar from './SideBar';
 import Tabs from '../../components/Tabs';
+import NutritionBars from '../Alimentacao/NutritionBars';
 import DaySelector from './DaySelector';
 import Amigos from './Amigos';
 import SolicitacoesAmizade from './SolicitacoesAmizade';
+import { FiX, FiMinus, FiPlus } from 'react-icons/fi';
 import * as S from './styles';
-import { FiX } from 'react-icons/fi';
 
 const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 const API_URL = 'http://localhost:3001/api';
@@ -26,6 +27,10 @@ export default function Home() {
   const [treinosDia, setTreinosDia] = useState([]);
   const [treinoAtivo, setTreinoAtivo] = useState(null);
   const [checkboxes, setCheckboxes] = useState({});
+  const [waterIntake, setWaterIntake] = useState(1200); // valor inicial fixo para teste
+  const [totalWaterGoal, setTotalWaterGoal] = useState(2000);
+  const [editWaterGoal, setEditWaterGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState(totalWaterGoal);
   const navigate = useNavigate();
 
   const fetchTreinosDoDia = async (diaAbreviado) => {
@@ -41,7 +46,6 @@ export default function Home() {
       const treinosDoDia = treinosArray.filter(treino =>
         (treino.status === 'ativo' || treino.status === 'em-andamento')
       );
-
 
       setTreinosDia(treinosDoDia);
     } catch (error) {
@@ -143,6 +147,11 @@ const handleFinalizarTreino = async () => {
   }
 };
 
+const dailyNutrition = {
+  protein: 50,
+  carbs: 200,
+  fat: 30
+};
 
 // Funções auxiliares
 const calcularDuracao = (horaInicio) => {
@@ -160,6 +169,42 @@ const salvarHistoricoLocal = (treino) => {
   useEffect(() => {
     fetchTreinosDoDia(activeDay);
   }, [activeDay]);
+
+  const handleWaterChange = async (amount) => {
+  const newWaterIntake = Math.max(0, Math.min(totalWaterGoal, waterIntake + amount));
+  setWaterIntake(newWaterIntake);
+
+  try {
+    await axios.put(`${API_URL}/user/water-intake`, { 
+      amount: newWaterIntake 
+    }, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar consumo de água:', error);
+  }
+};
+
+const handleUpdateWaterGoal = async () => {
+  if (newGoal < 500) {
+    alert('A meta mínima é 500ml');
+    return;
+  }
+
+  try {
+    await axios.put(`${API_URL}/user/water-goal`, { 
+      goal: newGoal 
+    }, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+    
+    setTotalWaterGoal(newGoal);
+    if (waterIntake > newGoal) setWaterIntake(newGoal);
+    setEditWaterGoal(false);
+  } catch (error) {
+    console.error('Erro ao atualizar meta de água:', error);
+  }
+};
 
   return (
     <S.Page>
@@ -180,7 +225,7 @@ const salvarHistoricoLocal = (treino) => {
         <S.SectionTitle>ROTINA</S.SectionTitle>
       </S.CenteredLogo>
 
-      <Tabs tabs={['Treino', 'Alimentação']} active={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={['Treino', 'Hidratação' ,'Alimentação']} active={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'Treino' && (
         <>
@@ -250,10 +295,99 @@ const salvarHistoricoLocal = (treino) => {
         </>
       )}
 
-        {activeTab === 'Alimentação' && (
-          <S.EmptyMessage>Plano alimentar ainda não disponível.</S.EmptyMessage>
+        {activeTab === 'Hidratação' && (
+          <S.WaterTracker>
+              <S.WaterHeader>
+                <S.WaterTitle>💧 Hidratação Diária</S.WaterTitle>
+                <S.EditButton onClick={() => setEditWaterGoal(true)}>🚩Editar Meta</S.EditButton>
+              </S.WaterHeader>
+
+              {editWaterGoal && (
+                <S.EditPopup>
+                  <p>📢 <strong>Sua nutricionista</strong> recomenda o limite diário de água com base nos seus dados.</p>
+                  <label htmlFor="metaAgua">Nova meta (em ml):</label>
+                  <input
+                    type="number"
+                    id="metaAgua"
+                    value={newGoal}
+                    min={500}
+                    step={100}
+                    onChange={(e) => setNewGoal(parseInt(e.target.value) || 0)}
+                  />
+                  <div>
+                    <button onClick={handleUpdateWaterGoal}>Salvar</button>
+                    <button onClick={() => setEditWaterGoal(false)}>Cancelar</button>
+                  </div>
+                </S.EditPopup>
+              )}
+
+              <S.WaterContent>
+                <S.WaterGlassContainer>
+                  {/* Garrafa de consumo */}
+                  <S.WaterGlass>
+                    <S.WaterDrop top="10px" left="30%" />
+                    <S.WaterDrop top="20px" left="70%" />
+                    <S.GlassTop />
+                    <S.GlassBody>
+                      <S.WaterFill percentage={(waterIntake / totalWaterGoal) * 100}>
+                        <S.BottleCapacity inside percentage={(waterIntake / totalWaterGoal) * 100}>
+                          {(waterIntake / 1000).toFixed(1)}L
+                        </S.BottleCapacity>
+                      </S.WaterFill>
+                    </S.GlassBody>
+                    <S.GlassBottom />
+                    <S.WaterLabel>Seu consumo</S.WaterLabel>
+                  </S.WaterGlass>
+
+                  {/* Garrafa da meta */}
+                  <S.WaterGlass>
+                    <S.WaterDrop top="10px" left="40%" />
+                    <S.WaterDrop top="25px" left="60%" />
+                    <S.GlassTop />
+                    <S.GlassBody>
+                      <S.WaterFill percentage={100}>
+                        <S.BottleCapacity inside percentage={100}>
+                          {(totalWaterGoal / 1000).toFixed(1)}L
+                        </S.BottleCapacity>
+                      </S.WaterFill>
+                    </S.GlassBody>
+                    <S.GlassBottom />
+                    <S.WaterLabel>Meta diária</S.WaterLabel>
+                  </S.WaterGlass>
+                </S.WaterGlassContainer>
+
+                <S.WaterControls>
+                  <S.WaterButton 
+                    onClick={() => handleWaterChange(-250)}
+                    disabled={waterIntake <= 0}
+                    aria-label="Remover água"
+                  >
+                    <FiMinus />
+                  </S.WaterButton>
+
+                  <S.WaterAmountControl>
+                    <span>250ml</span>
+                  </S.WaterAmountControl>
+
+                  <S.WaterButton 
+                    onClick={() => handleWaterChange(250)}
+                    disabled={waterIntake >= totalWaterGoal}
+                    aria-label="Adicionar água"
+                  >
+                    <FiPlus />
+                  </S.WaterButton>
+                </S.WaterControls>
+              </S.WaterContent>
+            </S.WaterTracker>
         )}
-      </S.Content>
-    </S.Page>
-  );
+
+         {activeTab === 'Alimentação' && ( 
+  <>
+    {/* Resumo Nutricional */}
+    <NutritionBars nutrition={dailyNutrition} />
+  </>
+)}
+</S.Content>
+</S.Page>
+);
 }
