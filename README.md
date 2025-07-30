@@ -42,7 +42,6 @@ MySQL Server (versão 8.0 ou superior)
 
 
 git clone https://github.com/lipeszl/ThorcFit
-cd ThorcFit
 
 
 2. Configurar o Banco de Dados
