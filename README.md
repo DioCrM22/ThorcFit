@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+ThorcFit - Documentação do Projeto
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Notion do trabalho( contém toda documentação ): https://grandiose-latency-d0d.notion.site/THORCFIT-TG-II-20ee392f4691809b94b7c78b94e2cbdb?pvs=73
 
-## Available Scripts
+Este repositório contém o código-fonte do aplicativo ThorcFit, uma plataforma para gerenciamento de atividades físicas e nutricionais. Este documento serve como um guia para entender a estrutura do projeto, como configurá-lo e executá-lo, além de fornecer a documentação técnica gerada.
 
-In the project directory, you can run:
+Estrutura do Projeto
 
-### `yarn start`
+O projeto ThorcFit é dividido em duas partes principais:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+•
+thorcfit_backend/: Contém o código do servidor (backend) desenvolvido em Node.js.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+•
+raiz/frontend/: Contém o código do cliente (frontend) desenvolvido em React.
 
-### `yarn test`
+•
+thorcfit.sql: Arquivo SQL com o schema do banco de dados e dados iniciais.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+•
+documentacao/: Diretório que contém os diagramas UML gerados e outros documentos técnicos. (está faltando diagramas entretanto se encontram no Notion do trabalho.)
 
-### `yarn build`
+Configuração e Execução
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Para configurar e executar o projeto ThorcFit localmente, siga os passos abaixo:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Pré-requisitos
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Certifique-se de ter os seguintes softwares instalados em sua máquina:
 
-### `yarn eject`
+•
+Node.js (versão 14 ou superior)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+•
+npm (gerenciador de pacotes do Node.js)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+•
+MySQL Server (versão 8.0 ou superior)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. Clonar o Repositório
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+git clone https://github.com/lipeszl/ThorcFit
+cd ThorcFit
 
-To learn React, check out the [React documentation](https://reactjs.org/).
 
-### Code Splitting
+2. Configurar o Banco de Dados
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+O projeto utiliza um banco de dados MySQL. Você precisará criar um banco de dados chamado thorcfit e importar o schema fornecido.
 
-### Analyzing the Bundle Size
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-### Making a Progressive Web App
+sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS thorcfit;"
+sudo mysql -u root thorcfit < thorcfit.sql
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-### Advanced Configuration
+Nota: Se você tiver problemas de acesso ao MySQL com o usuário root sem senha, pode ser necessário configurá-lo para permitir isso:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
 
-### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+sudo mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;"
 
-### `yarn build` fails to minify
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. Configurar e Iniciar o Backend
+
+Navegue até o diretório do backend, instale as dependências e inicie o servidor:
+
+
+
+cd thorcfit_backend
+npm install
+# Crie um arquivo .env na raiz do diretório thorcfit_backend com o seguinte conteúdo:
+# DB_NAME=thorcfit
+# DB_USER=root
+# DB_PASSWORD=
+# DB_HOST=localhost
+# DB_PORT=3306
+npm start
+
+
+O servidor backend estará rodando na porta 3001 (http://localhost:3001).
+
+4. Configurar e Iniciar o Frontend
+
+Em um novo terminal, navegue até o diretório do frontend, instale as dependências e inicie a aplicação:
+
+
+
+cd raiz/frontend
+npm install
+npm start
+
+
+A aplicação frontend estará disponível na porta 3000 (http://localhost:3000).
+
+Credenciais de Teste
+
+Para acessar a aplicação, você pode usar as seguintes credenciais de usuário:
+
+•
+Email: diogo@teste.com
+
+•
+Senha: Abc123!@
+
